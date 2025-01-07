@@ -35,6 +35,8 @@ public class RobotPlayer {
                 return;
         }
 
+        r.turn1();
+
         while (true) {
             try {
                 turnCount += 1;

@@ -22,6 +22,10 @@ public abstract class Tower extends Robot {
         spawnPlaces[11] = rc.getLocation().add(Direction.WEST).add(Direction.WEST);
     }
 
+    void turn1() throws GameActionException {
+        home = rc.getLocation();
+    }
+
     abstract void play() throws GameActionException;
 
     @Override
