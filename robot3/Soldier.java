@@ -1,4 +1,4 @@
-package robot2;
+package robot3;
 
 import battlecode.common.*;
 
@@ -39,7 +39,7 @@ public class Soldier extends Unit {
                 rc.getLocation().distanceSquaredTo(target) == 1) {
             if (rc.senseMapInfo(target.add(Direction.NORTH)).getMark() == PaintType.EMPTY) {
 
-                if (rng.nextInt() % 100 > 66) {
+                if (rng.nextInt() % 100 < 50) {
                     markRuin(target, UnitType.LEVEL_ONE_MONEY_TOWER);
                     System.out.println("Marked a ruin for a money tower");
                 } else {
@@ -64,6 +64,7 @@ public class Soldier extends Unit {
                 rc.move(bestDir);
         }
 
+        boolean triedToBuild = false;
         attackPos = rc.senseNearbyMapInfos(9);
         if (rc.isActionReady() && rc.getPaint() >= 20) {
             MapLocation paintLoc = findBestPaintLoc();
@@ -85,6 +86,7 @@ public class Soldier extends Unit {
                 try {
                     // sensing whether it's possible is just as expensive
                     // so no reason not to try
+                    triedToBuild = true;
                     switch (ruinPattern) {
                         case GameConstants.PAINT_TOWER_PATTERN:
                             rc.completeTowerPattern(UnitType.LEVEL_ONE_PAINT_TOWER, target);
@@ -96,8 +98,27 @@ public class Soldier extends Unit {
                             rc.completeTowerPattern(UnitType.LEVEL_ONE_MONEY_TOWER, target);
                             break;
                     }
-                } catch (GameActionException e) { ; }
+                } catch (GameActionException e) {
+                    if (rc.getMoney() < 1000)
+                        saveRuin = true;
+                }
             }
+        }
+
+        if (!triedToBuild && saveRuin) {
+            try {
+                switch (ruinPattern) {
+                    case GameConstants.PAINT_TOWER_PATTERN:
+                        rc.completeTowerPattern(UnitType.LEVEL_ONE_PAINT_TOWER, target);
+                        break;
+                    case GameConstants.DEFENSE_TOWER_PATTERN:
+                        rc.completeTowerPattern(UnitType.LEVEL_ONE_DEFENSE_TOWER, target);
+                        break;
+                    case GameConstants.MONEY_TOWER_PATTERN:
+                        rc.completeTowerPattern(UnitType.LEVEL_ONE_MONEY_TOWER, target);
+                        break;
+                }
+            } catch (GameActionException e) { ; }
         }
     }
 
@@ -187,6 +208,15 @@ public class Soldier extends Unit {
                     }
                 }
 
+                if (d != Direction.CENTER) {
+                    for (int i = 6; i >= 0; i--) {
+                        if (rc.getLocation().equals(lastLocations[i])) {
+                            val -= 20;
+                            break;
+                        }
+                    }
+                }
+
                 val += numAllies - numEnemyMoppers - numEnemyTowers * 3;
                 if (val > maxVal) {
                     maxVal = val;
@@ -220,6 +250,6 @@ public class Soldier extends Unit {
 
     @Override
     void endTurn() throws GameActionException {
-
+        super.endTurn();
     }
 }
