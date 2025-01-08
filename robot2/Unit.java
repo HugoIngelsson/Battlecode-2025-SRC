@@ -1,4 +1,4 @@
-package robot1;
+package robot2;
 
 import battlecode.common.*;
 
