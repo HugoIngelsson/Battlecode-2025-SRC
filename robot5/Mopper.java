@@ -34,9 +34,7 @@ public class Mopper extends Unit {
             if (rc.getLocation().distanceSquaredTo(target) < 2) {
                 RobotInfo tower = rc.senseRobotAtLocation(target);
                 if (tower != null && rc.getPaint() > 0) {
-                    if (tower.getPaintAmount() > 50) {
-                        rc.transferPaint(target, -1 * Math.min(MAX_PAINT - rc.getPaint(), tower.getPaintAmount()));
-                    }
+                    rc.transferPaint(target, -1 * Math.min(MAX_PAINT - rc.getPaint(), tower.getPaintAmount()));
                 } else {
                     /*lastPainTower = (target == lastPainTower) ? semiLastPaintTower : lastPainTower;
                     semiLastPaintTower = null;
@@ -82,8 +80,8 @@ public class Mopper extends Unit {
             }
 
             // stay where you are, likely more to be done soon
-            if (target != home)
-                target = rc.getLocation();
+//            if (target != home)
+//                target = rc.getLocation();
         }
     }
 
@@ -180,6 +178,8 @@ public class Mopper extends Unit {
                         if (!rc.isActionReady())
                             val -= 20;
                     }
+                } else if(rc.getPaint() < 20) {
+                    val+=50;
                 }
                 if (canMop) val += 20;
 

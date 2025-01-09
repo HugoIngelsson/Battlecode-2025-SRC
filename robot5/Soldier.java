@@ -37,7 +37,9 @@ public class Soldier extends Unit {
             if (rc.getLocation().distanceSquaredTo(target) < 2) {
                 RobotInfo tower = rc.senseRobotAtLocation(target);
                 if (tower != null) {
-                    if (tower.getPaintAmount() > 50) {
+                    if(tower.getPaintAmount() < 50 && rc.senseMapInfo(rc.getLocation()).getPaint().isAlly()  ){
+                        target = rc.getLocation();
+                    } else {
                         rc.transferPaint(target, -1 * Math.min(MAX_PAINT - rc.getPaint(), tower.getPaintAmount()));
                     }
                 } else {
@@ -225,6 +227,8 @@ public class Soldier extends Unit {
                     } else {
                         val -= 10;
                     }
+                } else if(rc.getPaint() < 20) {
+                    val+=50;
                 }
 
                 if (d != Direction.CENTER) {
