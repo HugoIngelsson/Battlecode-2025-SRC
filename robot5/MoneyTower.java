@@ -39,7 +39,7 @@ public class MoneyTower extends Tower {
                     break;
                 }
             }
-            if (Math.random() > 0.85){
+            if (Math.random() > 0.85 && rc.getRoundNum() > 100){
                 nextSpawn = 3;
             } else {
                 nextSpawn = 0;

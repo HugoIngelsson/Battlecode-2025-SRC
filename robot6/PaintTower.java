@@ -1,4 +1,4 @@
-package robot5;
+package robot6;
 
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -45,7 +45,7 @@ public class PaintTower extends Tower {
                     break;
                 }
             }
-            if(Math.random() > 0.85 && rc.getRoundNum() > 100) {
+            if(Math.random() > 0.7 && rc.getRoundNum() > 100 * rc.getMapWidth() / 20) {
                 nextSpawn = 3;
             } else {
                 nextSpawn = 0;

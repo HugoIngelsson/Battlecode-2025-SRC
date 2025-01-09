@@ -1,4 +1,4 @@
-package robot5;
+package robot6;
 
 import battlecode.common.*;
 
@@ -18,18 +18,8 @@ public class Soldier extends Unit {
             closestRuin = null;
         }
 
-        if (lastPainTower != null && rc.getPaint() < Math.sqrt(rc.getLocation().distanceSquaredTo(lastPainTower))) {
-
-//            System.out.println("SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE");
-
-            /*if (semiLastPaintTower == null) {
-                target = lastPainTower;
-            } else {
-                target = rc.getLocation().distanceSquaredTo(lastPainTower) >=
-                        rc.getLocation().distanceSquaredTo(semiLastPaintTower) ?
-                        lastPainTower : semiLastPaintTower; // return to nearest painful tower
-            }*/
-
+        if (lastPainTower != null &&
+                rc.getPaint() < Math.sqrt(rc.getLocation().distanceSquaredTo(lastPainTower))) {
             target = lastPainTower;
 
             targetIsRuin = false;
@@ -43,12 +33,12 @@ public class Soldier extends Unit {
                         rc.transferPaint(target, -1 * Math.min(MAX_PAINT - rc.getPaint(), tower.getPaintAmount()));
                     }
                 } else {
-                    /*lastPainTower = (target == lastPainTower) ? semiLastPaintTower : lastPainTower;
-                    semiLastPaintTower = null;
-                    target = lastPainTower;*/
+                    if (semiLastPaintTower != null) {
+                        lastPainTower = semiLastPaintTower;
+                        semiLastPaintTower = null;
+                    } else lastPainTower = home;
 
-                    target = home;
-                    lastPainTower = home;
+                    target = lastPainTower;
                 }
             }
         }
@@ -149,8 +139,13 @@ public class Soldier extends Unit {
         int bestVal = Integer.MIN_VALUE;
 
         for (MapInfo m : attackPos) {
-            if (!m.isPassable())
-                continue;
+            if (!m.isPassable()) {
+                RobotInfo robotAt = rc.senseRobotAtLocation(m.getMapLocation());
+                if (m.hasRuin() && robotAt != null && robotAt.getTeam() != rc.getTeam()) {
+                    System.out.println("ENEMY TOWER!!! at " + m.getMapLocation().x + " " + m.getMapLocation().y);
+                    return m.getMapLocation();
+                } else continue;
+            }
 
             rc.setIndicatorDot(m.getMapLocation(), 0, 255, 0);
             MapLocation loc = m.getMapLocation();
@@ -228,8 +223,8 @@ public class Soldier extends Unit {
                     } else {
                         val -= 10;
                     }
-                } else if(rc.getPaint() < 20) {
-                    val+=50;
+                } else if (rc.getPaint() < 20) {
+                    val += 50;
                 }
 
                 if (d != Direction.CENTER) {
@@ -262,7 +257,7 @@ public class Soldier extends Unit {
                 minDist = m.distanceSquaredTo(rc.getLocation());
                 ret = m;
             }
-            if (ri != null && ri.getTeam() == rc.getTeam()) {
+            else if (ri != null && ri.getTeam() == rc.getTeam()) {
                 UnitType tp = ri.getType();
                 if (tp == UnitType.LEVEL_ONE_PAINT_TOWER ||
                         tp == UnitType.LEVEL_THREE_PAINT_TOWER ||
@@ -270,8 +265,6 @@ public class Soldier extends Unit {
                     if (ri.getLocation() != this.lastPainTower) {
                         this.semiLastPaintTower = this.lastPainTower;
                         this.lastPainTower = ri.getLocation();
-
-                        System.out.println("LAST PAINT TOWER IS " + ri.getLocation().toString() + ri.getLocation().toString() + ri.getLocation().toString() + ri.getLocation().toString() + ri.getLocation().toString());
                     }
                 }
             }
