@@ -34,7 +34,9 @@ public class Mopper extends Unit {
             if (rc.getLocation().distanceSquaredTo(target) < 2) {
                 RobotInfo tower = rc.senseRobotAtLocation(target);
                 if (tower != null && rc.getPaint() > 0) {
-                    rc.transferPaint(target, Math.min(MAX_PAINT - rc.getPaint(), tower.getPaintAmount()));
+                    if (tower.getPaintAmount() > 50) {
+                        rc.transferPaint(target, -1 * Math.min(MAX_PAINT - rc.getPaint(), tower.getPaintAmount()));
+                    }
                 } else {
                     /*lastPainTower = (target == lastPainTower) ? semiLastPaintTower : lastPainTower;
                     semiLastPaintTower = null;
@@ -211,7 +213,7 @@ public class Mopper extends Unit {
                 minDist = m.distanceSquaredTo(rc.getLocation());
                 ret = m;
             }
-            if (ri != null) {
+            if (ri != null && ri.getTeam() == rc.getTeam()) {
                 UnitType tp = ri.getType();
                 if (tp == UnitType.LEVEL_ONE_PAINT_TOWER ||
                         tp == UnitType.LEVEL_THREE_PAINT_TOWER ||

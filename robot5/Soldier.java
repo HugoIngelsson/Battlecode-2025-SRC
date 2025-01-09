@@ -6,6 +6,7 @@ public class Soldier extends Unit {
     private static final int MAX_PAINT = 200;
 
     MapInfo[] attackPos;
+    int building = -51;
     public Soldier(RobotController rc) throws GameActionException {
         super(rc);
     }
@@ -13,9 +14,13 @@ public class Soldier extends Unit {
     void play() throws GameActionException {
         closestRuin = getClosestRuin();
 
+        if (rc.getRoundNum() - building < 50){
+            closestRuin = null;
+        }
+
         if (lastPainTower != null && rc.getPaint() < Math.sqrt(rc.getLocation().distanceSquaredTo(lastPainTower))) {
 
-            System.out.println("SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE");
+//            System.out.println("SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE SOLDIER SAVE");
 
             /*if (semiLastPaintTower == null) {
                 target = lastPainTower;
@@ -25,14 +30,16 @@ public class Soldier extends Unit {
                         lastPainTower : semiLastPaintTower; // return to nearest painful tower
             }*/
 
-            target = semiLastPaintTower;
+            target = lastPainTower;
 
             targetIsRuin = false;
 
             if (rc.getLocation().distanceSquaredTo(target) < 2) {
                 RobotInfo tower = rc.senseRobotAtLocation(target);
                 if (tower != null) {
-                    rc.transferPaint(target, Math.min(MAX_PAINT - rc.getPaint(), tower.getPaintAmount()));
+                    if (tower.getPaintAmount() > 50) {
+                        rc.transferPaint(target, -1 * Math.min(MAX_PAINT - rc.getPaint(), tower.getPaintAmount()));
+                    }
                 } else {
                     /*lastPainTower = (target == lastPainTower) ? semiLastPaintTower : lastPainTower;
                     semiLastPaintTower = null;
@@ -127,7 +134,11 @@ public class Soldier extends Unit {
                     rc.completeTowerPattern(UnitType.LEVEL_ONE_MONEY_TOWER, target);
                     break;
             }
-        } catch (GameActionException e) { ; }
+        } catch (GameActionException e) {
+            if(e.getMessage().contains("limit number of towers")){
+                building = rc.getRoundNum();
+            }
+        }
     }
 
     MapLocation findBestPaintLoc() throws GameActionException {
@@ -246,7 +257,7 @@ public class Soldier extends Unit {
                 minDist = m.distanceSquaredTo(rc.getLocation());
                 ret = m;
             }
-            if (ri != null) {
+            if (ri != null && ri.getTeam() == rc.getTeam()) {
                 UnitType tp = ri.getType();
                 if (tp == UnitType.LEVEL_ONE_PAINT_TOWER ||
                         tp == UnitType.LEVEL_THREE_PAINT_TOWER ||
@@ -254,6 +265,8 @@ public class Soldier extends Unit {
                     if (ri.getLocation() != this.lastPainTower) {
                         this.semiLastPaintTower = this.lastPainTower;
                         this.lastPainTower = ri.getLocation();
+
+                        System.out.println("LAST PAINT TOWER IS " + ri.getLocation().toString() + ri.getLocation().toString() + ri.getLocation().toString() + ri.getLocation().toString() + ri.getLocation().toString());
                     }
                 }
             }

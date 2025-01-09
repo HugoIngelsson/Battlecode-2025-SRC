@@ -45,6 +45,20 @@ public class PaintTower extends Tower {
                     break;
                 }
             }
+            if(Math.random() > 0.85) {
+                nextSpawn = 3;
+            } else {
+                nextSpawn = 0;
+            }
+        }
+        else if (nextSpawn == 3  && rc.getPaint() >= 300 &&
+                (rc.getMoney() >= 1030 || rc.getRoundNum() > 400 && rc.getMoney() >= 250)) {
+            for (int i=11; i>=0; i--) {
+                if (rc.canBuildRobot(UnitType.SPLASHER, spawnPlaces[i])) {
+                    rc.buildRobot(UnitType.SPLASHER, spawnPlaces[i]);
+                    break;
+                }
+            }
             nextSpawn = 0;
         }
     }
