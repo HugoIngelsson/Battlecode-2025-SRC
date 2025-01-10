@@ -1,4 +1,4 @@
-package robot7;
+package robot8;
 
 import battlecode.common.*;
 
@@ -7,12 +7,15 @@ public class Soldier extends Unit {
 
     MapInfo[] attackPos;
     int building = -51;
+    int srpToFix = Integer.MAX_VALUE;
+    boolean formingSRP = false;
     public Soldier(RobotController rc) throws GameActionException {
         super(rc);
     }
 
     void play() throws GameActionException {
         closestRuin = getClosestRuin();
+        formingSRP = false;
 
         if (rc.getRoundNum() - building < 50){
             closestRuin = null;
@@ -53,6 +56,13 @@ public class Soldier extends Unit {
                 hasRuinPattern = true;
             }
         }
+        else if ((srpToFix = neededForSRP()) <= 8 && srpToFix > 0) {
+            target = rc.getLocation();
+            formingSRP = true;
+
+            if (rc.senseMapInfo(target).getMark() == PaintType.EMPTY)
+                rc.mark(rc.getLocation(), false);
+        }
         else if (!blockNewTarget) { // roam randomly
             int x = rng.nextInt(rc.getMapWidth());
             int y = rng.nextInt(rc.getMapHeight());
@@ -86,7 +96,7 @@ public class Soldier extends Unit {
             Direction bestDir = considerMoves();
             rc.setIndicatorDot(rc.getLocation().add(bestDir), 255, 0, 0);
 
-            if (bestDir != Direction.CENTER)
+            if (bestDir != Direction.CENTER && !formingSRP)
                 rc.move(bestDir);
         }
 
@@ -104,11 +114,24 @@ public class Soldier extends Unit {
                     int relY = paintLoc.y - closestRuin.y + 2;
 
                     secondary = (ruinPattern & (1 << (relX + 5*relY))) > 0;
+                } else if (formingSRP &&
+                        Math.abs(paintLoc.x - target.x) <= 2 &&
+                        Math.abs(paintLoc.y - target.y) <= 2) {
+                    int relX = paintLoc.x - target.x + 2;
+                    int relY = paintLoc.y - target.y + 2;
+
+                    secondary = (GameConstants.RESOURCE_PATTERN & (1 << (relX + 5*relY))) > 0;
                 } else {
                     secondary = (paintLoc.x + paintLoc.y) % 2 == 0;
                 }
 
                 rc.attack(paintLoc, secondary);
+                if (formingSRP) {
+                    try {
+                        rc.completeResourcePattern(rc.getLocation());
+                    }
+                    catch (GameActionException e) { ; }
+                }
             }
         }
 
@@ -150,8 +173,8 @@ public class Soldier extends Unit {
             if (m.getPaint() == PaintType.EMPTY) {
                 int val = -5 * loc.distanceSquaredTo(target);
                 val -= loc.distanceSquaredTo(home);
-                if (Math.abs(loc.x - target.x) <= 3 &&
-                        Math.abs(loc.y - target.y) <= 3) {
+                if (Math.abs(loc.x - target.x) <= 2 &&
+                        Math.abs(loc.y - target.y) <= 2) {
                     val += 200;
                 }
                 if (loc.equals(rc.getLocation()))
@@ -174,6 +197,25 @@ public class Soldier extends Unit {
                     if ((m.getPaint() == PaintType.ALLY_SECONDARY) ^ secondary) {
                         if (200 > bestVal) {
                             bestVal = 200;
+                            ret = loc;
+                        }
+                    }
+                } else if (formingSRP && Math.abs(loc.x - target.x) <= 2 &&
+                        Math.abs(loc.y - target.y) <= 2) {
+                    int relX = loc.x - target.x + 2;
+                    int relY = loc.y - target.y + 2;
+
+                    boolean secondary = (GameConstants.RESOURCE_PATTERN & (1 << (relX + 5*relY))) > 0;
+
+                    if (!m.getPaint().isAlly()) {
+                        if (2000 > bestVal) {
+                            bestVal = 2000;
+                            ret = loc;
+                        }
+                    }
+                    else if (m.getPaint() == PaintType.ALLY_SECONDARY ^ secondary) {
+                        if (1000 > bestVal) {
+                            bestVal = 1000;
                             ret = loc;
                         }
                     }
@@ -269,6 +311,34 @@ public class Soldier extends Unit {
         }
 
         return ret;
+    }
+
+    // returns the number of squares needed to change for SRP
+    // will return INTEGER.MAX_VALUE if this would ruin another SRP (eventually)
+    int neededForSRP() throws GameActionException {
+        int x = rc.getLocation().x;
+        int y = rc.getLocation().y;
+        int cnt = 0;
+        for (int i=-2; i<=2; i++) {
+            for (int j=-2; j<=2; j++) {
+                MapLocation loc = new MapLocation(x+i, y+j);
+                if (!rc.onTheMap(loc)) return Integer.MAX_VALUE;
+
+                MapInfo mi = rc.senseMapInfo(loc);
+                if (mi.getPaint().isEnemy() || !mi.isPassable() ||
+                    mi.getMark() != PaintType.EMPTY && (i != 0 && j != 0)) return Integer.MAX_VALUE;
+
+                int relX = i + 2;
+                int relY = j + 2;
+
+                boolean secondary = (GameConstants.RESOURCE_PATTERN & (1 << (relX + 5*relY))) > 0;
+                if (!mi.getPaint().isAlly() ||
+                        mi.getPaint() == PaintType.ALLY_SECONDARY ^ secondary)
+                    cnt++;
+            }
+        }
+
+        return cnt;
     }
 
     @Override
