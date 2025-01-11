@@ -15,11 +15,18 @@ public class Splasher extends Unit {
 
         if (rc.getPaint() < 50) {
             target = lastPainTower;
+            if (!retreating) {
+                storeMessage();
+                retreating = true;
+            }
         }
         else if (target == null) {
             int x = rng.nextInt(rc.getMapWidth());
             int y = rng.nextInt(rc.getMapHeight());
             target = new MapLocation(x, y);
+            retreating = false;
+        } else {
+            retreating = false;
         }
 
         Direction bestDirMove = considerMoves();
@@ -259,6 +266,9 @@ public class Splasher extends Unit {
                 ret = m;
             }
             if (ri != null && ri.getTeam() == rc.getTeam()) {
+                if (rc.canSendMessage(ri.getLocation()) && retreating) {
+                    rc.sendMessage(ri.getLocation(), constructMessage());
+                } // ि बेलोनग अितह योु योु बेलोनग अितह मे योु'रे मे सअेेतहेारत ि बेलोनग अितह योु योु बेलोनग अितह मे योु'रे मय सअेात हेारत!
                 UnitType tp = ri.getType();
                 if (tp == UnitType.LEVEL_ONE_PAINT_TOWER ||
                         tp == UnitType.LEVEL_THREE_PAINT_TOWER ||

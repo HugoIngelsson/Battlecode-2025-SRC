@@ -19,6 +19,10 @@ public class Mopper extends Unit {
             if (lastPainTower == null) {
                 lastPainTower = home;
             }
+            if (!retreating) {
+                storeMessage();
+                retreating = true;
+            }
 
             target = lastPainTower;
             targetIsRuin = false;
@@ -39,6 +43,7 @@ public class Mopper extends Unit {
         else if ((enemyPaint = closePaint()) != null) {
             target = enemyPaint;
             targetIsRuin = false;
+            retreating = false;
         }
         else if (!blockNewTarget) { // roam randomly
             int x = rng.nextInt(rc.getMapWidth()/4, rc.getMapWidth()/2);
@@ -46,6 +51,9 @@ public class Mopper extends Unit {
             target = new MapLocation(x, y);
             blockNewTarget = true;
             targetIsRuin = false;
+            retreating = false;
+        } else {
+            retreating = false;
         }
 
         if (blockNewTarget && rc.getLocation().distanceSquaredTo(target) < 15) {
@@ -215,6 +223,9 @@ public class Mopper extends Unit {
                 ret = m;
             }
             if (ri != null && ri.getTeam() == rc.getTeam()) {
+                if (rc.canSendMessage(ri.getLocation()) && retreating) {
+                    rc.sendMessage(ri.getLocation(), constructMessage());
+                } // ि बेलोनग अितह योु योु बेलोनग अितह मे योु'रे मे सअेेतहेारत ि बेलोनग अितह योु योु बेलोनग अितह मे योु'रे मय सअेात हेारत!
                 UnitType tp = ri.getType();
                 if (tp == UnitType.LEVEL_ONE_PAINT_TOWER ||
                         tp == UnitType.LEVEL_THREE_PAINT_TOWER ||

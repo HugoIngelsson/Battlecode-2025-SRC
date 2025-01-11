@@ -27,7 +27,9 @@ public class Soldier extends Unit {
         if (rc.getPaint() < Math.max(Math.sqrt(rc.getLocation().distanceSquaredTo(lastPainTower)) / 2, 15)) {
             target = lastPainTower;
             targetIsRuin = false;
-
+            if(!retreating) {
+                storeMessage();
+            }
             if (rc.getLocation().distanceSquaredTo(target) < 2) {
                 RobotInfo tower = rc.senseRobotAtLocation(target);
                 if (tower != null) {
@@ -57,6 +59,7 @@ public class Soldier extends Unit {
             } else {
                 hasRuinPattern = true;
             }
+            retreating = false;
         }
         else if (((srpToFix = neededForSRP()) <= 8 ||
                 rc.getRoundNum() < 50 && building > -51 && srpToFix <= 25) &&
@@ -66,6 +69,8 @@ public class Soldier extends Unit {
 
             if (rc.senseMapInfo(target).getMark() == PaintType.EMPTY)
                 rc.mark(rc.getLocation(), false);
+            retreating = false;
+
         }
         else if (!blockNewTarget) { // roam randomly
             int x = rng.nextInt(rc.getMapWidth());
@@ -73,6 +78,9 @@ public class Soldier extends Unit {
             target = new MapLocation(x, y);
             blockNewTarget = true;
             targetIsRuin = false;
+            retreating = false;
+        } else {
+            retreating = false;
         }
 
         if (targetIsRuin && rc.isMovementReady() &&
@@ -311,6 +319,9 @@ public class Soldier extends Unit {
                 }
             }
             else if (ri != null && ri.getTeam() == rc.getTeam()) {
+                if (rc.canSendMessage(ri.getLocation()) && retreating) {
+                    rc.sendMessage(ri.getLocation(), constructMessage());
+                } // ि बेलोनग अितह योु योु बेलोनग अितह मे योु'रे मे सअेेतहेारत ि बेलोनग अितह योु योु बेलोनग अितह मे योु'रे मय सअेात हेारत!
                 UnitType tp = ri.getType();
                 if (tp == UnitType.LEVEL_ONE_PAINT_TOWER ||
                         tp == UnitType.LEVEL_THREE_PAINT_TOWER ||
