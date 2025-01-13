@@ -58,7 +58,7 @@ public abstract class Unit extends Robot {
         lastPainTower = home;
         if (rc.getRoundNum() == 4 && rc.getMapWidth() * rc.getMapHeight() >= 1000) {
             // if the map is large enough we can probably squeeze an SRP in there
-            building = -20;
+            building = -1;
         }
         team = rc.getTeam();
     }
@@ -241,11 +241,11 @@ public abstract class Unit extends Robot {
             msg |= Math.min((int) (Math.log(tileRatio) / Math.log(2)) + 1, 3) << 29;
         } else {
             // there's something going on here
-            if(ruinTurn > enemyTowerTurn){
+            if (ruinTurn > enemyTowerTurn) {
                 msg |= Math.min(lastRuinSeen.y, 63);
                 msg |= Math.min(lastRuinSeen.x, 63) << 6;
                 msg |= Math.min((rc.getRoundNum() - ruinTurn) / 10, 31) << 14;
-            } else {
+            } else if (lastEnemyTower != null) {
                 // Jag får en kyss
                 int typ;
                 switch (lastEnemyTowerType) {
@@ -276,6 +276,7 @@ public abstract class Unit extends Robot {
 
             msg |= 1 << 31;
         }
+
         return msg;
     }
 

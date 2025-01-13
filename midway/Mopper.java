@@ -162,7 +162,7 @@ public class Mopper extends Unit {
                             numEnemyMoppers++;
                     } else if (nearRobots[i].getType() != UnitType.SOLDIER &&
                             nearRobots[i].getType() != UnitType.SPLASHER) {
-                        if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 3)
+                        if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 9)
                             numEnemyTowers++;
                         else if (nearRobots[i].getType() == UnitType.LEVEL_ONE_DEFENSE_TOWER && // FIX!! ONLY LEVEL 1 FOR NOW
                                 nearRobots[i].getLocation().distanceSquaredTo(dest) <= 20) {
@@ -206,7 +206,7 @@ public class Mopper extends Unit {
                     }
                 }
 
-                val += 5 * numAllies - numEnemyMoppers - numEnemyTowers * 3;
+                val += 5 * numAllies - numEnemyMoppers - numEnemyTowers * 30;
                 if (val > maxVal) {
                     maxVal = val;
                     ret = d;

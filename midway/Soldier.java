@@ -67,7 +67,7 @@ public class Soldier extends Unit {
             }
             retreating = false;
         }
-        else if (((srpToFix = neededForSRP()) <= 8 ||
+        else if (((srpToFix = neededForSRP()) <= rc.getPaint() * 10 ||
                 rc.getRoundNum() < 50 && building > -51 && srpToFix <= 25) &&
                 srpToFix > 0) {
             target = rc.getLocation();
@@ -147,6 +147,7 @@ public class Soldier extends Unit {
                 if (formingSRP) {
                     try {
                         rc.completeResourcePattern(rc.getLocation());
+                        rc.mark(rc.getLocation(), true);
                     }
                     catch (GameActionException e) { ; }
                 }
@@ -168,7 +169,7 @@ public class Soldier extends Unit {
                     break;
             }
         } catch (GameActionException e) {
-            if(e.getMessage().contains("limit number of towers")){
+            if (rc.getNumberTowers() >= GameConstants.MAX_NUMBER_OF_TOWERS) { // apparently a thing
                 building = rc.getRoundNum();
             }
         }
@@ -268,7 +269,7 @@ public class Soldier extends Unit {
                             numEnemyMoppers++;
                     } else if (nearRobots[i].getType() != UnitType.SOLDIER &&
                             nearRobots[i].getType() != UnitType.SPLASHER) {
-                        if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 3)
+                        if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 9)
                             numEnemyTowers++;
                         else if (nearRobots[i].getType() == UnitType.LEVEL_ONE_DEFENSE_TOWER &&
                                 nearRobots[i].getLocation().distanceSquaredTo(dest) <= 20) {
@@ -299,7 +300,7 @@ public class Soldier extends Unit {
 
                 val += numAllies - numEnemyMoppers;
                 if (!rc.isActionReady())
-                    val -= numEnemyTowers * 10;
+                    val -= numEnemyTowers * 30;
 
                 if (val > maxVal) {
                     maxVal = val;
@@ -360,12 +361,40 @@ public class Soldier extends Unit {
         return ret;
     }
 
+    int[][] SRPDeltas = {
+            { 0, 3}, { 1, 4}, { 2, 3}, { 3, 2}, { 4, 1},
+            { 3, 0}, { 4,-1}, { 3,-2}, { 2,-3}, { 1,-4},
+            { 0,-3}, {-1,-4}, {-2,-3}, {-3,-2}, {-4,-1},
+            {-3, 0}, {-4, 1}, {-3, 2}, {-2, 3}, {-1, 4},
+    };
+
+    int[][] extraGoodFittings = {
+            { 1, 3}, { 3, 1},
+            {-1, 3}, {-3, 1},
+            {-1,-3}, {-3,-1},
+            { 1,-3}, { 3,-1},
+    };
+
     // returns the number of squares needed to change for SRP
     // will return INTEGER.MAX_VALUE if this would ruin another SRP (eventually)
+    // costs: ~4000 bytecode
     int neededForSRP() throws GameActionException {
         int x = rc.getLocation().x;
         int y = rc.getLocation().y;
         int cnt = 0;
+
+        System.out.println("Pre: " + Clock.getBytecodeNum());
+        for (int i=19; i>=0; i--) {
+            MapLocation loc = new MapLocation(x+SRPDeltas[i][0], y+SRPDeltas[i][1]);
+            if (!rc.onTheMap(loc))
+                continue;
+
+            MapInfo mi = rc.senseMapInfo(loc);
+            if (mi.getMark() == PaintType.ALLY_SECONDARY ||
+                    mi.getMark() == PaintType.ALLY_PRIMARY && rc.canSenseLocation(loc))
+                return Integer.MAX_VALUE;
+        }
+
         for (int i=-2; i<=2; i++) {
             for (int j=-2; j<=2; j++) {
                 MapLocation loc = new MapLocation(x+i, y+j);
@@ -373,18 +402,40 @@ public class Soldier extends Unit {
 
                 MapInfo mi = rc.senseMapInfo(loc);
                 if (mi.getPaint().isEnemy() || !mi.isPassable() ||
-                    mi.getMark() != PaintType.EMPTY && (i != 0 && j != 0)) return Integer.MAX_VALUE;
+                        (mi.getMark() == PaintType.ALLY_SECONDARY ||
+                        mi.getMark() == PaintType.ALLY_PRIMARY && rc.canSenseRobotAtLocation(loc)) &&
+                        (i != 0 || j != 0))
+                    return Integer.MAX_VALUE;
 
                 int relX = i + 2;
                 int relY = j + 2;
 
                 boolean secondary = (GameConstants.RESOURCE_PATTERN & (1 << (relX + 5*relY))) > 0;
                 if (!mi.getPaint().isAlly() ||
-                        mi.getPaint() == PaintType.ALLY_SECONDARY ^ secondary)
+                        (mi.getPaint() == PaintType.ALLY_SECONDARY ^ secondary))
                     cnt++;
             }
         }
 
+        if (cnt > 0) {
+            // good to complete a mark
+            if (rc.senseMapInfo(rc.getLocation()).getMark() == PaintType.ALLY_PRIMARY)
+                cnt -= 2;
+
+            // these patterns fit well (compact)
+            for (int i=7; i>=0; i--) {
+                MapLocation loc = new MapLocation(x+extraGoodFittings[i][0], y+extraGoodFittings[i][1]);
+                if (!rc.onTheMap(loc))
+                    continue;
+
+                if (rc.senseMapInfo(loc).getMark() == PaintType.ALLY_SECONDARY)
+                    cnt -= 5;
+            }
+
+            cnt = Math.max(1, cnt);
+        }
+
+        System.out.println("Post: " + Clock.getBytecodeNum());
         return cnt;
     }
 
