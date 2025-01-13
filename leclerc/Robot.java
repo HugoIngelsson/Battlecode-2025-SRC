@@ -3,6 +3,7 @@ package leclerc;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
+import battlecode.common.UnitType;
 
 import java.util.Random;
 
@@ -12,6 +13,8 @@ public abstract class Robot {
     MapLocation lastPainTower = null;
     MapLocation semiLastPaintTower = null;
     Random rng;
+    MapLocation lastEnemyTower = null;
+    UnitType lastEnemyTowerType = null;
 
     public Robot(RobotController rc) throws GameActionException {
         this.rc = rc;

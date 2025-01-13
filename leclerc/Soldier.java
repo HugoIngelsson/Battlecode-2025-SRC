@@ -17,6 +17,12 @@ public class Soldier extends Unit {
 
     void play() throws GameActionException {
         closestRuin = getClosestRuin();
+        if(closestRuin != null){
+            lastRuinSeen = closestRuin;
+            ruinTurn = rc.getRoundNum();
+        }
+
+
         formingSRP = false;
 
         if (rc.getRoundNum() - building < 50){
@@ -326,18 +332,27 @@ public class Soldier extends Unit {
                     ret = m;
                 }
             }
-            else if (ri != null && ri.getTeam() == rc.getTeam()) {
+            else if (ri != null) {
                 if (rc.canSendMessage(ri.getLocation()) && retreating) {
-                    rc.sendMessage(ri.getLocation(), constructMessage());
-                } // ि बेलोनग अितह योु योु बेलोनग अितह मे योु'रे मे सअेेतहेारत ि बेलोनग अितह योु योु बेलोनग अितह मे योु'रे मय सअेात हेारत!
+                    rc.sendMessage(ri.getLocation(), constructMessage(rc.getRoundNum() % 2 == 0));
+                }
+
+                // मैं दुनिया पर राज करता था। जब मैं वचन देता तो आंखें उठ जातीं!!
+
                 UnitType tp = ri.getType();
                 if (tp == UnitType.LEVEL_ONE_PAINT_TOWER ||
                         tp == UnitType.LEVEL_THREE_PAINT_TOWER ||
                         tp == UnitType.LEVEL_TWO_PAINT_TOWER) {
-                    if (ri.getLocation() != this.lastPainTower) {
+                    if (ri.getLocation() != this.lastPainTower && ri.getTeam() == rc.getTeam()) {
                         this.semiLastPaintTower = this.lastPainTower;
                         this.lastPainTower = ri.getLocation();
                     }
+                }
+
+                if (ri.getTeam() != rc.getTeam()){
+                    lastEnemyTower = ri.getLocation();
+                    lastEnemyTowerType = tp;
+                    enemyTowerTurn = rc.getRoundNum();
                 }
             }
         }
