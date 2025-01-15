@@ -1,4 +1,4 @@
-package midway;
+package nautilus;
 
 import battlecode.common.*;
 
@@ -160,12 +160,16 @@ public class Splasher extends Unit {
             int numEnemyTowers = 0;
             int numEnemyMoppers = 0;
             int numAllies = 0;
+            int numSuperCloseAllies = 0;
             MapLocation dest = rc.getLocation().add(d);
             if (rc.canMove(d)) {
                 for (int i=nearRobots.length-1; i>=0; i--) {
                     if (nearRobots[i].team == rc.getTeam()) {
-                        if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 10)
+                        if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 10){
                             numAllies++;
+                            if (nearRobots[i].getLocation().isWithinDistanceSquared(dest, 2))
+                                numSuperCloseAllies++;
+                        }
                     } else if (nearRobots[i].getType() == UnitType.MOPPER) {
                         if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 4)
                             numEnemyMoppers++;
@@ -200,7 +204,7 @@ public class Splasher extends Unit {
                     }
                 }
 
-                val += 5 * numAllies - numEnemyMoppers - numEnemyTowers * 35;
+                val += 5 * numAllies - numEnemyMoppers - numEnemyTowers * 100 - numSuperCloseAllies * 35;
                 if (val > maxVal) {
                     maxVal = val;
                     ret = d;

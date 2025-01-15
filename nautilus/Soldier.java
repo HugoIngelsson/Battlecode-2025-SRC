@@ -1,4 +1,4 @@
-package midway;
+package nautilus;
 
 import battlecode.common.*;
 
@@ -163,18 +163,8 @@ public class Soldier extends Unit {
 
                     secondary = (GameConstants.RESOURCE_PATTERN & (1 << (relX + 5*relY))) > 0;
                 } else {
-                    secondary = (paintLoc.x + paintLoc.y) % 2 == 0;
-                    int x = paintLoc.x, y = paintLoc.y;
-                    while (x > 0) {
-                        x -= 3;
-                        y -= 1;
-                    }
-
-                    y %= 10;
-                    y += 10;
-                    y %= 10;
-                    if (y % 3 == 0 && x + y / 3 == 0)
-                        secondary = false;
+                    int x = paintLoc.x % 4, y = paintLoc.y % 4;
+                    secondary = (GameConstants.RESOURCE_PATTERN & (1 << (x + 5*y))) > 0;
                 }
 
                 rc.attack(paintLoc, secondary);
@@ -302,12 +292,16 @@ public class Soldier extends Unit {
             int numEnemyTowers = 0;
             int numEnemyMoppers = 0;
             int numAllies = 0;
+            int numSuperCloseAllies = 0;
             MapLocation dest = rc.getLocation().add(d);
             if (rc.canMove(d)) {
                 for (int i=nearRobots.length-1; i>=0; i--) {
                     if (nearRobots[i].team == rc.getTeam()) {
-                        if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 10)
+                        if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 10) {
                             numAllies++;
+                            if (nearRobots[i].getLocation().isWithinDistanceSquared(dest, 2))
+                                numSuperCloseAllies++;
+                        }
                     } else if (nearRobots[i].getType() == UnitType.MOPPER) {
                         if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 4)
                             numEnemyMoppers++;
@@ -344,7 +338,11 @@ public class Soldier extends Unit {
 
                 val += numAllies - numEnemyMoppers;
                 if (!rc.isActionReady())
-                    val -= numEnemyTowers * 30;
+                    val -= numEnemyTowers * 100;
+                else
+                    val += numEnemyTowers * 40;
+
+                val -= numSuperCloseAllies * 30;
 
                 if (val > maxVal) {
                     maxVal = val;
@@ -425,7 +423,7 @@ public class Soldier extends Unit {
     int neededForSRP() throws GameActionException {
         int x = rc.getLocation().x;
         int y = rc.getLocation().y;
-        int cnt = 0;
+        int cnt = 5;
 
         for (int i=19; i>=0; i--) {
             MapLocation loc = new MapLocation(x+SRPDeltas[i][0], y+SRPDeltas[i][1]);
@@ -479,8 +477,9 @@ public class Soldier extends Unit {
                 if (!rc.onTheMap(loc))
                     continue;
 
-                if (rc.senseMapInfo(loc).getMark() == PaintType.ALLY_SECONDARY)
-                    cnt -= 5;
+                if (rc.senseMapInfo(loc).getMark() == PaintType.ALLY_SECONDARY ||
+                        rc.senseMapInfo(loc).getMark() == PaintType.ALLY_PRIMARY && rc.canSenseRobotAtLocation(loc))
+                    return Integer.MAX_VALUE;
             }
 
             cnt = Math.max(1, cnt);

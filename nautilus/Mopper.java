@@ -1,4 +1,4 @@
-package midway;
+package nautilus;
 
 import battlecode.common.*;
 
@@ -152,13 +152,17 @@ public class Mopper extends Unit {
             int numEnemyTowers = 0;
             int numEnemyMoppers = 0;
             int numAllies = 0;
+            int numSuperCloseAllies = 0;
             MapLocation dest = rc.getLocation().add(d);
             if (rc.canMove(d)) {
                 for (int i=nearRobots.length-1; i>=0; i--) {
                     if (nearRobots[i].team == rc.getTeam()) {
                         if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 4 &&
-                                nearRobots[i].getType() == UnitType.SOLDIER)
+                                nearRobots[i].getType() == UnitType.SOLDIER){
                             numAllies++;
+                            if (nearRobots[i].getLocation().isWithinDistanceSquared(dest, 2))
+                                numSuperCloseAllies++;
+                        }
                     } else if (nearRobots[i].getType() == UnitType.MOPPER) {
                         if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 4)
                             numEnemyMoppers++;
@@ -208,7 +212,7 @@ public class Mopper extends Unit {
                     }
                 }
 
-                val += 5 * numAllies - numEnemyMoppers - numEnemyTowers * 30;
+                val += 5 * numAllies - numEnemyMoppers - numEnemyTowers * 100 - numSuperCloseAllies * 35;
                 if (val > maxVal) {
                     maxVal = val;
                     ret = d;

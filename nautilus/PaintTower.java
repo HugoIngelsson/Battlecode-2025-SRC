@@ -1,13 +1,13 @@
-package midway;
+package nautilus;
 
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.UnitType;
 
-public class MoneyTower extends Tower {
+public class PaintTower extends Tower {
     int nextSpawn = 1;
-    public MoneyTower(RobotController rc) throws GameActionException {
+    public PaintTower(RobotController rc) throws GameActionException {
         super(rc);
         this.AOE_DMG = 10;
         this.TARGET_DMG = 20;
@@ -21,8 +21,14 @@ public class MoneyTower extends Tower {
             rc.attack(target);
         }
 
-        if (nextSpawn == 0 && rc.getPaint() >= 100 &&
-                (rc.getMoney() >= 1030 && rc.getRoundNum() > 30  || rc.getRoundNum() == 1 && rc.getMoney() >= 300)) {
+        if (rc.getType() == UnitType.LEVEL_ONE_PAINT_TOWER && rc.getMoney() >= 5000) {
+            rc.upgradeTower(rc.getLocation());
+        }
+        else if (rc.getType() == UnitType.LEVEL_TWO_PAINT_TOWER && rc.getMoney() >= 7500) {
+            rc.upgradeTower(rc.getLocation());
+        }
+        else if (nextSpawn == 0 && rc.getPaint() >= 100 &&
+                (rc.getMoney() >= 1030 && rc.getRoundNum() > 30 || rc.getRoundNum() < 5 && rc.getMoney() >= 300)) {
             for (int i=11; i>=0; i--) {
                 if (rc.canBuildRobot(UnitType.MOPPER, spawnPlaces[i])) {
                     rc.buildRobot(UnitType.MOPPER, spawnPlaces[i]);
@@ -31,25 +37,21 @@ public class MoneyTower extends Tower {
             }
             nextSpawn++;
         }
-        if (nextSpawn == 1 && rc.getPaint() >= 200 &&
-                (rc.getMoney() >= 1030 && rc.getRoundNum() > 30 || rc.getRoundNum() <= 2 && rc.getMoney() >= 250)) {
+        else if (nextSpawn == 1 && rc.getPaint() >= 200 &&
+                (rc.getMoney() >= 1030 && rc.getRoundNum() > 30 || rc.getRoundNum() < 5 && rc.getMoney() >= 250)) {
             for (int i=11; i>=0; i--) {
                 if (rc.canBuildRobot(UnitType.SOLDIER, spawnPlaces[i])) {
                     rc.buildRobot(UnitType.SOLDIER, spawnPlaces[i]);
                     break;
                 }
             }
-            if (rc.getRoundNum() <= 2 && isLargeMap) {
-                nextSpawn = 1;
-            }
-            else if (rc.getRoundNum() <= 2 ||
-                    Math.random() > 0.6 && rc.getRoundNum() > 30 && rc.getPaint() >= 300){
+            if (Math.random() > 0.6 && rc.getRoundNum() > 30) {
                 nextSpawn = 3;
             } else {
                 nextSpawn = 0;
             }
         }
-        else if (nextSpawn == 3 && rc.getPaint() >= 300 && rc.getMoney() >= 1030) {
+        else if (nextSpawn == 3  && rc.getPaint() >= 300 && rc.getMoney() >= 1030) {
             for (int i=11; i>=0; i--) {
                 if (rc.canBuildRobot(UnitType.SPLASHER, spawnPlaces[i])) {
                     rc.buildRobot(UnitType.SPLASHER, spawnPlaces[i]);

@@ -1,4 +1,4 @@
-package midway;
+package nautilus;
 
 import battlecode.common.*;
 
