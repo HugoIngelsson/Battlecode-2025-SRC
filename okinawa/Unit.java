@@ -352,7 +352,7 @@ public abstract class Unit extends Robot {
                 dupLocations++;
         }
 
-        if (dupLocations > 1 && target != null && rc.getLocation().distanceSquaredTo(target) > 5) {
+        if (dupLocations > 0 && target != null && rc.getLocation().distanceSquaredTo(target) > 5) {
             stuck = true;
             PathFinder.target = target;
         }

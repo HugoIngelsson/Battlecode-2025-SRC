@@ -134,11 +134,16 @@ public class Soldier extends Unit {
             rc.setIndicatorDot(target, 255, 0, 0);
 
         if (rc.isMovementReady()) {
-            Direction bestDir = considerMoves();
-            rc.setIndicatorDot(rc.getLocation().add(bestDir), 255, 0, 0);
+            if (stuck) {
+                stuck = PathFinder.move(currentLocation, target);
+            }
 
-            if (bestDir != Direction.CENTER && !formingSRP)
-                rc.move(bestDir);
+            if (!stuck && rc.isMovementReady()) {
+                Direction bestDir = considerMoves();
+                if (bestDir != Direction.CENTER && !formingSRP) {
+                    rc.move(bestDir);
+                }
+            }
         }
 
         attackPos = rc.senseNearbyMapInfos(9);
@@ -206,7 +211,8 @@ public class Soldier extends Unit {
             }
         }
 
-        unstuckify();
+        if (!formingSRP)
+            unstuckify();
     }
 
     MapLocation findBestPaintLoc() throws GameActionException {
@@ -299,7 +305,8 @@ public class Soldier extends Unit {
                     if (nearRobots[i].team == rc.getTeam()) {
                         if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 10) {
                             numAllies++;
-                            if (nearRobots[i].getLocation().isWithinDistanceSquared(dest, 2))
+                            if (!rc.senseMapInfo(nearRobots[i].location).hasRuin() &&
+                                    nearRobots[i].getLocation().isWithinDistanceSquared(dest, 2))
                                 numSuperCloseAllies++;
                         }
                     } else if (nearRobots[i].getType() == UnitType.MOPPER) {

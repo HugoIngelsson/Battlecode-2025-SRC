@@ -69,11 +69,16 @@ public class Mopper extends Unit {
             rc.setIndicatorDot(target, 255, 0, 0);
 
         if (rc.isMovementReady()) {
-            Direction bestDir = considerMoves();
-            rc.setIndicatorDot(rc.getLocation().add(bestDir), 255, 0, 0);
+            if (stuck) {
+                stuck = PathFinder.move(currentLocation, target);
+            }
 
-            if (bestDir != Direction.CENTER)
-                rc.move(bestDir);
+            if (!stuck && rc.isMovementReady()) {
+                Direction bestDirMove = considerMoves();
+                if (bestDirMove != Direction.CENTER) {
+                    rc.move(bestDirMove);
+                }
+            }
         }
 
         // where can we mop?
@@ -157,10 +162,10 @@ public class Mopper extends Unit {
             if (rc.canMove(d)) {
                 for (int i=nearRobots.length-1; i>=0; i--) {
                     if (nearRobots[i].team == rc.getTeam()) {
-                        if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 4 &&
-                                nearRobots[i].getType() == UnitType.SOLDIER){
+                        if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 4){
                             numAllies++;
-                            if (nearRobots[i].getLocation().isWithinDistanceSquared(dest, 2))
+                            if (!rc.senseMapInfo(nearRobots[i].location).hasRuin() &&
+                                    nearRobots[i].getLocation().isWithinDistanceSquared(dest, 2))
                                 numSuperCloseAllies++;
                         }
                     } else if (nearRobots[i].getType() == UnitType.MOPPER) {

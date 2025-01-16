@@ -45,9 +45,12 @@ public class PathFinder  {
      * @throws GameActionException
      */
     static public boolean move(MapLocation loc, MapLocation target) throws GameActionException {
-        if (!rc.isMovementReady() || target == null)
+        if (!rc.isMovementReady() || target == null) {
+            inBugNav = false;
             return false;
+        }
         if (!PathFinder.target.equals(target)){
+            inBugNav = false;
             return false;
         }
 
@@ -253,15 +256,19 @@ public class PathFinder  {
          */
         static boolean canMoveGood(Direction dir) throws GameActionException {
             MapLocation loc = rc.getLocation().add(dir);
-            if (rc.canMove(dir)) {
-                return true;
+            if (!rc.canMove(dir)) {
+                return false;
             }
-            if (!rc.canSenseLocation(loc))
-                return false;
-            MapInfo info = rc.senseMapInfo(loc);
-            if (info.isWall())
-                return false;
-            return false;
+
+            MapLocation[] ml = rc.senseNearbyRuins(-1);
+            for (int i=ml.length-1; i>=0; i--) {
+                if (ml[i].isWithinDistanceSquared(loc, 9) &&
+                        rc.canSenseRobotAtLocation(ml[i]) &&
+                        rc.senseRobotAtLocation(ml[i]).getTeam() != rc.getTeam())
+                    return false;
+            }
+
+            return true;
         }
 
         static boolean canPass(MapLocation loc, Direction targetDir) throws GameActionException {

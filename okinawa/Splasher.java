@@ -175,7 +175,8 @@ public class Splasher extends Unit {
                     if (nearRobots[i].team == rc.getTeam()) {
                         if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 10){
                             numAllies++;
-                            if (nearRobots[i].getLocation().isWithinDistanceSquared(dest, 2))
+                            if (!rc.senseMapInfo(nearRobots[i].location).hasRuin() &&
+                                    nearRobots[i].getLocation().isWithinDistanceSquared(dest, 2))
                                 numSuperCloseAllies++;
                         }
                     } else if (nearRobots[i].getType() == UnitType.MOPPER) {
