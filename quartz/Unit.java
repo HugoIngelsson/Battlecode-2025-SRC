@@ -89,6 +89,9 @@ public abstract class Unit extends Robot {
     void endTurn() throws GameActionException {
         lastLocations[lastLocationsID++] = rc.getLocation();
         lastLocationsID %= lastLocations.length;
+
+        if (rc.getPaint() == 0)
+            rc.disintegrate();
     }
 
     void markRuin(MapLocation loc, UnitType type) throws GameActionException {

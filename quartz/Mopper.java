@@ -124,8 +124,8 @@ public class Mopper extends Unit {
 
             RobotInfo ri = rc.senseRobotAtLocation(m.getMapLocation());
             if (rc.getPaint() > 30 && ri != null &&
-                    ri.getPaintAmount() == 0 && ri.getTeam() == rc.getTeam()) {
-                rc.transferPaint(m.getMapLocation(), 5);
+                    ri.getPaintAmount() <= 5 && ri.getTeam() == rc.getTeam()) {
+                rc.transferPaint(m.getMapLocation(), 10);
                 return null;
             }
         }
