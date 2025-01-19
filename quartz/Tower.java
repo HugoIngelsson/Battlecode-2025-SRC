@@ -2,9 +2,15 @@ package quartz;
 
 import battlecode.common.*;
 
+import java.util.Map;
+
 public abstract class Tower extends Robot {
     MapLocation[] spawnPlaces;
     int AOE_DMG, TARGET_DMG, ATTACK_RANGE_SQ;
+
+    MapLocation[] frontlineLocs;
+    int[] frontlineTimestampsSince;
+    boolean fullFrontline;
 
     public Tower(RobotController rc) throws GameActionException {
         super(rc);
@@ -24,6 +30,10 @@ public abstract class Tower extends Robot {
         spawnPlaces[11] = rc.getLocation().add(Direction.WEST).add(Direction.WEST);
 
         sortSpawnPlaces();
+
+        frontlineLocs = new MapLocation[5];
+        frontlineTimestampsSince = new int[5];
+        fullFrontline = false;
     }
 
     void sortSpawnPlaces() {
@@ -126,24 +136,99 @@ public abstract class Tower extends Robot {
         Message[] messages = rc.readMessages(rc.getRoundNum());
         for (int i = 0; i < messages.length; i++) {
             int msgBytes = messages[i].getBytes();
+            MapLocation loc;
+            int roundsSince;
+            double priority = 0;
             if ((msgBytes & 0x80000000) == 0) {
                 // decode frontline info, i know these are local but it kinda depends how we wanna store this stuff
                 // maybe into an array? idk
                 int posY = msgBytes & 0x0000003F;
                 int posX = (msgBytes & 0x00000FC0) >> 6;
+                loc = new MapLocation(posX, posY);
                 double enemyUnitRatio = Math.pow(2, ((msgBytes & 0x00007000) >> 12) - 1);
-                int timestamp = rc.getRoundNum() - ((msgBytes & 0x000F8000) >> 15) * 10;
+                roundsSince = ((msgBytes & 0x000F8000) >> 15) * 10;
+                int timestamp = rc.getRoundNum() - roundsSince;
                 int enemyMoppers = (msgBytes & 0x00700000) >> 20;
                 int enemySoldiers = (msgBytes & 0x03800000) >> 23;
                 int enemySplashers = (msgBytes & 0x1C000000) >> 26;
                 double enemyTileRatio = Math.pow(2, ((msgBytes & 0x60000000) >> 29) - 1);
+
+                priority = 2 - (1 / enemyTileRatio) - (1 / enemyUnitRatio);
             } else {
                 // decode tower info, same deal about how to store this
                 int posY = msgBytes & 0x0000003F;
                 int posX = (msgBytes & 0x00000FC0) >> 6;
+                loc = new MapLocation(posX, posY);
                 int type = (msgBytes & 0x00003000) >> 12;
-                int timestamp = rc.getRoundNum() - ((msgBytes & 0x0007C000) >> 14) * 10;
+                roundsSince = ((msgBytes & 0x0007C000) >> 14) * 10;
+                int timestamp = rc.getRoundNum() - roundsSince;
             }
+
+            if (priority > -0.1) {
+                if (!fullFrontline) {
+                    populateFrontline(loc, roundsSince);
+                } else {
+                    int index = findNearbyFrontline(loc);
+                    if (frontlineTimestampsSince[index] >= 100) {
+                        frontlineLocs[index] = loc;
+                        frontlineTimestampsSince[index] = roundsSince;
+                    } else if (frontlineTimestampsSince[index] - 20 < roundsSince) {
+                        reestimateFrontline(loc, index, roundsSince, 1, priority);
+                    } else {
+                        reestimateFrontline(loc, index, roundsSince, 0.5, priority);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * stuff
+     *
+     * @return the library books
+     */
+    int findNearbyFrontline(MapLocation newLoc) {
+        int lowestDistance = 2000;
+        int outIndex = -1;
+        for (int i = 0; i < frontlineLocs.length; i++) {
+            if (frontlineLocs[i] != null && frontlineLocs[i].distanceSquaredTo(newLoc) < lowestDistance) {
+                outIndex = i;
+            }
+        }
+        return outIndex;
+    }
+
+    /**
+     * yummy yummy in my tummy
+     *
+     * @param newLoc if you do it i'll do it
+     */
+    void populateFrontline(MapLocation newLoc, int roundsSince) {
+        for (int i = 0; i < frontlineLocs.length; i++) {
+            if (frontlineLocs[i] == null) {
+                frontlineLocs[i] = newLoc;
+                frontlineTimestampsSince[i] = roundsSince;
+                return;
+            }
+        }
+        fullFrontline = true;
+    }
+
+    void reestimateFrontline(MapLocation newLoc, int index, int roundsSince, double priorityBenchmark, double priority) {
+        if (priority < priorityBenchmark || frontlineTimestampsSince[index] < roundsSince) {
+            int newX = (newLoc.x + frontlineLocs[index].x) / 2;
+            int newY = (newLoc.y + frontlineLocs[index].y) / 2;
+            frontlineLocs[index] = new MapLocation(newX, newY);
+            frontlineTimestampsSince[index] = (frontlineTimestampsSince[index] + roundsSince) / 2;
+        } else {
+            frontlineLocs[index] = newLoc;
+            frontlineTimestampsSince[index] = roundsSince;
+        }
+    }
+
+    void messageSpawnedRobot(MapLocation robotLoc) throws GameActionException {
+        if (rc.canSendMessage(robotLoc)) {
+            
         }
     }
 }
