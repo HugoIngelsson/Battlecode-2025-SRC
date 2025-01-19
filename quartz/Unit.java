@@ -77,6 +77,14 @@ public abstract class Unit extends Robot {
                     rc.getLocation().directionTo(center).rotateLeft().dy * 10);
         }
         team = rc.getTeam();
+
+        Message[] messages = rc.readMessages(-1);
+        if (messages.length > 0 && rc.getType() != UnitType.SOLDIER) {
+            int msg = messages[0].getBytes();
+            MapLocation receivedTarget = new MapLocation(msg & 0x3F, msg & 0xFC0 >> 6);
+            System.out.println(rc.getRoundNum() + " " + receivedTarget.x + ", " + receivedTarget.y);
+            target = receivedTarget;
+        }
     }
 
     void initTurn() throws GameActionException {

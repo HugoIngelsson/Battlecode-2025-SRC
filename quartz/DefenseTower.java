@@ -37,6 +37,7 @@ public class DefenseTower extends Tower {
             for (int i=11; i>=0; i--) {
                 if (rc.canBuildRobot(UnitType.MOPPER, spawnPlaces[i])) {
                     rc.buildRobot(UnitType.MOPPER, spawnPlaces[i]);
+                    messageSpawnedRobot(spawnPlaces[i]);
                     break;
                 }
             }
@@ -47,6 +48,7 @@ public class DefenseTower extends Tower {
             for (int i=11; i>=0; i--) {
                 if (rc.canBuildRobot(UnitType.SOLDIER, spawnPlaces[i])) {
                     rc.buildRobot(UnitType.SOLDIER, spawnPlaces[i]);
+                    messageSpawnedRobot(spawnPlaces[i]);
                     break;
                 }
             }
@@ -64,6 +66,7 @@ public class DefenseTower extends Tower {
             for (int i=11; i>=0; i--) {
                 if (rc.canBuildRobot(UnitType.SPLASHER, spawnPlaces[i])) {
                     rc.buildRobot(UnitType.SPLASHER, spawnPlaces[i]);
+                    messageSpawnedRobot(spawnPlaces[i]);
                     break;
                 }
             }

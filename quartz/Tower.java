@@ -160,6 +160,9 @@ public abstract class Tower extends Robot {
                 int posX = (msgBytes & 0x00000FC0) >> 6;
                 loc = new MapLocation(posX, posY);
                 int type = (msgBytes & 0x00003000) >> 12;
+                if (type == 0) {
+                    return;
+                }
                 roundsSince = ((msgBytes & 0x0007C000) >> 14) * 10;
                 int timestamp = rc.getRoundNum() - roundsSince;
             }
@@ -169,6 +172,11 @@ public abstract class Tower extends Robot {
                     populateFrontline(loc, roundsSince);
                 } else {
                     int index = findNearbyFrontline(loc);
+                    if (index == -1) {
+                        for (int j = 0; j < frontlineLocs.length; j++) {
+                            System.out.println(frontlineLocs[j]);
+                        }
+                    }
                     if (frontlineTimestampsSince[index] >= 100) {
                         frontlineLocs[index] = loc;
                         frontlineTimestampsSince[index] = roundsSince;
@@ -193,6 +201,7 @@ public abstract class Tower extends Robot {
         for (int i = 0; i < frontlineLocs.length; i++) {
             if (frontlineLocs[i] != null && frontlineLocs[i].distanceSquaredTo(newLoc) < lowestDistance) {
                 outIndex = i;
+                lowestDistance = frontlineLocs[i].distanceSquaredTo(newLoc);
             }
         }
         return outIndex;
@@ -227,8 +236,16 @@ public abstract class Tower extends Robot {
     }
 
     void messageSpawnedRobot(MapLocation robotLoc) throws GameActionException {
-        if (rc.canSendMessage(robotLoc)) {
-            
+        int lastLocIndex = 4;
+        for (int i = 0; i < frontlineLocs.length; i++) {
+            if (frontlineLocs[i] == null) {
+                lastLocIndex = i - 1;
+                break;
+            }
+        }
+        if (rc.canSendMessage(robotLoc) && lastLocIndex >= 0) {
+            int index = (int) (Math.random() * (lastLocIndex + 1));
+            rc.sendMessage(robotLoc, frontlineLocs[index].x | frontlineLocs[index].y << 6);
         }
     }
 }
