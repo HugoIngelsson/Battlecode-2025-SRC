@@ -248,4 +248,24 @@ public abstract class Tower extends Robot {
             rc.sendMessage(robotLoc, frontlineLocs[index].x | frontlineLocs[index].y << 6);
         }
     }
+
+    int chooseNextSpawntype() {
+        if (rc.getRoundNum() <= 5) {
+            if (rc.getType() == UnitType.LEVEL_ONE_MONEY_TOWER) {
+                System.out.println("HI");
+                if (rc.getRoundNum() == 1)
+                    return 0;
+            }
+            return 1;
+        }
+
+        if ((rc.getPaint() >= 300 || rc.getType().getBaseType() == UnitType.LEVEL_ONE_PAINT_TOWER)
+                && Math.random() < 0.4 * rc.getRoundNum() / (10.0 + rc.getRoundNum())) {
+            return 3;
+        } else if (Math.random() < 0.6){
+            return 1;
+        } else {
+            return 0;
+        }
+    }
 }

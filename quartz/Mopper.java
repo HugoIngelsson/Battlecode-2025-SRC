@@ -112,12 +112,21 @@ public class Mopper extends Unit {
                 if (loc.equals(rc.getLocation()))
                     val += 135;
 
-                if (rc.senseRobotAtLocation(m.getMapLocation()) != null) {
-                    val += 500;
+                if (rc.canSenseRobotAtLocation(m.getMapLocation()) &&
+                        rc.senseRobotAtLocation(m.getMapLocation()).team != rc.getTeam()) {
+                    return loc;
                 }
 
                 if (val > bestVal) {
                     bestVal = val;
+                    ret = loc;
+                }
+            }
+
+            if (rc.canSenseRobotAtLocation(m.getMapLocation()) &&
+                    rc.senseRobotAtLocation(m.getMapLocation()).team != rc.getTeam()) {
+                if (500 > bestVal) {
+                    bestVal = 500;
                     ret = loc;
                 }
             }
@@ -199,9 +208,9 @@ public class Mopper extends Unit {
                 int val = (int)Math.sqrt(dest.distanceSquaredTo(target)) * -5;
                 if (!destInfo.getPaint().isAlly()) {
                     if (destInfo.getPaint() == PaintType.EMPTY) {
-                        val -= 70;
+                        val -= 40;
                     } else {
-                        val -= 100;
+                        val -= 70;
                     }
                 } else if (rc.getPaint() < 20) {
                     val += 70;

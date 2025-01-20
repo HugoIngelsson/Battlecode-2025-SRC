@@ -22,7 +22,7 @@ public class MoneyTower extends Tower {
         }
 
         if (nextSpawn == 0 && rc.getPaint() >= 100 &&
-                (rc.getMoney() >= 1030 && rc.getRoundNum() > 30  || rc.getRoundNum() == 1 && rc.getMoney() >= 300)) {
+                (rc.getMoney() >= 1030 && rc.getRoundNum() > 30 || rc.getRoundNum() <= 2 && rc.getMoney() >= 300)) {
             for (int i=11; i>=0; i--) {
                 if (rc.canBuildRobot(UnitType.MOPPER, spawnPlaces[i])) {
                     rc.buildRobot(UnitType.MOPPER, spawnPlaces[i]);
@@ -30,8 +30,8 @@ public class MoneyTower extends Tower {
                     break;
                 }
             }
-            if (rc.getRoundNum() > 5)
-                nextSpawn++;
+
+            nextSpawn = chooseNextSpawntype();
         }
         if (nextSpawn == 1 && rc.getPaint() >= 200 &&
                 (rc.getMoney() >= 1030 && rc.getRoundNum() > 30 || rc.getRoundNum() <= 2 && rc.getMoney() >= 250)) {
@@ -42,15 +42,8 @@ public class MoneyTower extends Tower {
                     break;
                 }
             }
-            if (rc.getRoundNum() <= 2 && isLargeMap) {
-                nextSpawn = 1;
-            }
-            else if (rc.getRoundNum() <= 2 ||
-                    Math.random() > 0.6 && rc.getRoundNum() > 30 && rc.getPaint() >= 300){
-                nextSpawn = 3;
-            } else {
-                nextSpawn = 0;
-            }
+
+            nextSpawn = chooseNextSpawntype();
         }
         else if (nextSpawn == 3 && rc.getPaint() >= 300 && rc.getMoney() >= 1030) {
             for (int i=11; i>=0; i--) {
@@ -60,7 +53,8 @@ public class MoneyTower extends Tower {
                     break;
                 }
             }
-            nextSpawn = 0;
+
+            nextSpawn = chooseNextSpawntype();
         }
     }
 

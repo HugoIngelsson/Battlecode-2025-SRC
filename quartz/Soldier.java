@@ -90,9 +90,11 @@ public class Soldier extends Unit {
         }
         else if (saveSRPLoc != null) { // go back to finish what you started
             target = saveSRPLoc;
+            targetIsRuin = false;
         }
         else if (saveRuinLoc != null) {
             target = saveRuinLoc;
+            targetIsRuin = false;
         }
         else if (!blockNewTarget) { // roam randomly
             int x = rng.nextInt(rc.getMapWidth());
@@ -103,6 +105,7 @@ public class Soldier extends Unit {
             retreating = false;
         } else {
             retreating = false;
+            targetIsRuin = false;
         }
 
         if (srpToFix == Integer.MAX_VALUE)
@@ -112,7 +115,7 @@ public class Soldier extends Unit {
                 rc.getLocation().distanceSquaredTo(target) == 1) {
             if (rc.senseMapInfo(target.add(Direction.NORTH)).getMark() == PaintType.EMPTY) {
 
-                if (rng.nextInt(100) < 50 || rc.getNumberTowers() == 2) {
+                if (rng.nextInt(100) < 60 || rc.getNumberTowers() == 2) {
                     markRuin(target, UnitType.LEVEL_ONE_MONEY_TOWER);
                     System.out.println("Marked a ruin for a money tower");
                 } else {
@@ -143,6 +146,10 @@ public class Soldier extends Unit {
 
         if (rc.onTheMap(target))
             rc.setIndicatorDot(target, 255, 0, 0);
+
+        if (rc.isActionReady()) {
+            greedyAttack();
+        }
 
         if (rc.isMovementReady()) {
             if (stuck) {
@@ -336,7 +343,7 @@ public class Soldier extends Unit {
                 }
 
                 MapInfo destInfo = rc.senseMapInfo(dest);
-                int val = dest.distanceSquaredTo(target) * -3;
+                int val = (int)Math.sqrt(dest.distanceSquaredTo(target)) * -5;
                 if (!destInfo.getPaint().isAlly()) {
                     if (destInfo.getPaint() == PaintType.EMPTY) {
                         if (!rc.isActionReady())
@@ -358,8 +365,8 @@ public class Soldier extends Unit {
                 val += numAllies - numEnemyMoppers;
                 if (!rc.isActionReady())
                     val -= numEnemyTowers * 100;
-                else
-                    val += numEnemyTowers * 40;
+                else if (rc.getHealth() > 20)
+                    val += numEnemyTowers * 50;
 
                 val -= numSuperCloseAllies * 30;
 
@@ -505,6 +512,16 @@ public class Soldier extends Unit {
         }
 
         return cnt;
+    }
+
+    void greedyAttack() throws GameActionException {
+        for (MapLocation m : nearRuins) {
+            if (rc.canSenseRobotAtLocation(m) &&
+                    rc.senseRobotAtLocation(m).getTeam() != rc.getTeam() &&
+                    rc.canAttack(m)) {
+                rc.attack(m);
+            }
+        }
     }
 
     @Override

@@ -36,7 +36,7 @@ public class PaintTower extends Tower {
                 }
             }
 
-            nextSpawn++;
+            nextSpawn = chooseNextSpawntype();
         }
         else if (nextSpawn == 1 && rc.getPaint() >= 200 &&
                 (rc.getMoney() >= 1030 && rc.getRoundNum() > 30 || rc.getRoundNum() < 5 && rc.getMoney() >= 250)) {
@@ -46,11 +46,8 @@ public class PaintTower extends Tower {
                     break;
                 }
             }
-            if (Math.random() > 0.6 && rc.getRoundNum() > 30) {
-                nextSpawn = 3;
-            } else {
-                nextSpawn = 0;
-            }
+
+            nextSpawn = chooseNextSpawntype();
         }
         else if (nextSpawn == 3  && rc.getPaint() >= 300 && rc.getMoney() >= 1030) {
             for (int i=11; i>=0; i--) {
@@ -60,7 +57,8 @@ public class PaintTower extends Tower {
                     break;
                 }
             }
-            nextSpawn = 0;
+
+            nextSpawn = chooseNextSpawntype();
         }
     }
 
