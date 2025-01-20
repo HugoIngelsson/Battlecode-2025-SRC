@@ -77,9 +77,9 @@ public class Soldier extends Unit {
             }
             retreating = false;
         }
-        else if (((srpToFix = neededForSRP()) <= rc.getPaint() * 10 ||
-                rc.getRoundNum() < 50 && building > -51 && srpToFix <= 25) &&
-                srpToFix > 0 && saveSRPLoc == null) {
+        else if ((srpToFix = neededForSRP()) <= rc.getPaint() * 10 &&
+                saveSRPLoc == null ||
+                (rc.getLocation() == saveSRPLoc && srpToFix < Integer.MAX_VALUE)) {
             target = rc.getLocation();
             formingSRP = true;
 
@@ -125,8 +125,7 @@ public class Soldier extends Unit {
             }
         }
 
-        if (blockNewTarget && rc.getLocation().distanceSquaredTo(target) < 15 &&
-                SRPSearch-- < 0) {
+        if (SRPSearch-- < 0 && blockNewTarget && rc.getLocation().distanceSquaredTo(target) < 15) {
             blockNewTarget = false;
         }
 
@@ -134,7 +133,7 @@ public class Soldier extends Unit {
         if (saveSRPLoc != null && rc.onTheMap(saveSRPLoc))
             rc.setIndicatorDot(target, 255, 255, 0);
 
-        if (saveSRPLoc != null && rc.getLocation().equals(saveSRPLoc) &&
+        if (saveSRPLoc != null && rc.getLocation().equals(saveSRPLoc) && srpToFix == Integer.MAX_VALUE &&
                 rc.getPaint() > Math.max(Math.sqrt(rc.getLocation().distanceSquaredTo(lastPainTower)), 15)) {
             saveSRPLoc = null;
         }
@@ -198,7 +197,7 @@ public class Soldier extends Unit {
 
                         SRPSearch = 10;
                         blockNewTarget = true;
-                        target = new MapLocation(target.x-1, target.y+3);
+                        target = new MapLocation(target.x+4, target.y);
                         saveSRPLoc = null;
                         formingSRP = false;
                     }
@@ -246,7 +245,6 @@ public class Soldier extends Unit {
                 } else continue;
             }
 
-            rc.setIndicatorDot(m.getMapLocation(), 0, 255, 0);
             MapLocation loc = m.getMapLocation();
             if (m.getPaint() == PaintType.EMPTY) {
                 if (closestRuin != null && hasRuinPattern &&
@@ -291,14 +289,16 @@ public class Soldier extends Unit {
                     boolean secondary = (GameConstants.RESOURCE_PATTERN & (1 << (relX + 5*relY))) > 0;
 
                     if (!m.getPaint().isAlly()) {
-                        if (2000 > bestVal) {
-                            bestVal = 2000;
+                        int delta = (int)(Math.random() * 100);
+                        if (2000 + delta > bestVal) {
+                            bestVal = 2000 + delta;
                             ret = loc;
                         }
                     }
                     else if (m.getPaint() == PaintType.ALLY_SECONDARY ^ secondary) {
-                        if (1000 > bestVal) {
-                            bestVal = 1000;
+                        int delta = (int)(Math.random() * 100);
+                        if (1000 + delta > bestVal) {
+                            bestVal = 1000 + delta;
                             ret = loc;
                         }
                     }
@@ -447,68 +447,42 @@ public class Soldier extends Unit {
     // will return INTEGER.MAX_VALUE if this would ruin another SRP (eventually)
     // costs: ~4000 bytecode
     int neededForSRP() throws GameActionException {
+        if (rc.senseMapInfo(rc.getLocation()).isResourcePatternCenter())
+            return Integer.MAX_VALUE;
+
         int x = rc.getLocation().x;
         int y = rc.getLocation().y;
-        int cnt = 5;
+        int cnt = 2;
 
-        for (int i=19; i>=0; i--) {
-            MapLocation loc = new MapLocation(x+SRPDeltas[i][0], y+SRPDeltas[i][1]);
-            if (!rc.onTheMap(loc))
-                continue;
+        for (int i=nearLocations.length-1; i>=0; i--) {
+            MapInfo mi = nearLocations[i];
+            MapLocation loc = mi.getMapLocation();
+            int relX = loc.x - x;
+            int relY = loc.y - y;
 
-            MapInfo mi = rc.senseMapInfo(loc);
-            if (mi.getMark() == PaintType.ALLY_SECONDARY ||
-                    mi.getMark() == PaintType.ALLY_PRIMARY && rc.canSenseLocation(loc))
-                return Integer.MAX_VALUE;
-        }
-
-        for (int i=-2; i<=2; i++) {
-            for (int j=-2; j<=2; j++) {
-                MapLocation loc = new MapLocation(x+i, y+j);
+            if (relX == 0 && relY == 0) {
+                if (rc.senseMapInfo(rc.getLocation()).getMark() == PaintType.ALLY_PRIMARY)
+                    cnt -= 2;
+            } else if (Math.abs(relX) <= 2 && Math.abs(relY) <= 2) {
                 if (!rc.onTheMap(loc)) return Integer.MAX_VALUE;
 
-                MapInfo mi = rc.senseMapInfo(loc);
                 if (mi.getPaint().isEnemy() || !mi.isPassable() ||
-                        mi.getMark() == PaintType.ALLY_PRIMARY && rc.canSenseRobotAtLocation(loc) &&
-                        (i != 0 || j != 0))
+                        mi.getMark() == PaintType.ALLY_PRIMARY && rc.canSenseRobotAtLocation(loc) ||
+                        mi.isResourcePatternCenter())
                     return Integer.MAX_VALUE;
-
-                if (mi.getMark() == PaintType.ALLY_SECONDARY) {
-                    if (rc.canSenseRobotAtLocation(loc.add(Direction.NORTH)) && rc.senseMapInfo(loc.add(Direction.NORTH)).hasRuin() ||
-                            rc.canSenseRobotAtLocation(loc.add(Direction.SOUTH)) && rc.senseMapInfo(loc.add(Direction.SOUTH)).hasRuin() ||
-                            rc.canSenseRobotAtLocation(loc.add(Direction.EAST)) && rc.senseMapInfo(loc.add(Direction.EAST)).hasRuin() ||
-                            rc.canSenseRobotAtLocation(loc.add(Direction.WEST)) && rc.senseMapInfo(loc.add(Direction.WEST)).hasRuin()) {
-                        // do nothing
-                    } else return Integer.MAX_VALUE;
-                }
-
-                int relX = i + 2;
-                int relY = j + 2;
 
                 boolean secondary = (GameConstants.RESOURCE_PATTERN & (1 << (relX + 5*relY))) > 0;
                 if (!mi.getPaint().isAlly() ||
                         (mi.getPaint() == PaintType.ALLY_SECONDARY ^ secondary))
                     cnt++;
-            }
-        }
-
-        if (cnt > 0) {
-            // good to complete a mark
-            if (rc.senseMapInfo(rc.getLocation()).getMark() == PaintType.ALLY_PRIMARY)
-                cnt -= 2;
-
-            // these patterns fit well (compact)
-            for (int i=7; i>=0; i--) {
-                MapLocation loc = new MapLocation(x+extraGoodFittings[i][0], y+extraGoodFittings[i][1]);
+            } else {
                 if (!rc.onTheMap(loc))
                     continue;
 
-                if (rc.senseMapInfo(loc).isResourcePatternCenter() ||
-                        rc.senseMapInfo(loc).getMark() == PaintType.ALLY_PRIMARY && rc.canSenseRobotAtLocation(loc) && !formingSRP)
+                if (mi.isResourcePatternCenter() ||
+                        mi.getMark() == PaintType.ALLY_PRIMARY && rc.canSenseLocation(loc))
                     return Integer.MAX_VALUE;
             }
-
-            cnt = Math.max(1, cnt);
         }
 
         return cnt;

@@ -22,7 +22,7 @@ public class MoneyTower extends Tower {
         }
 
         if (nextSpawn == 0 && rc.getPaint() >= 100 &&
-                (rc.getMoney() >= 1030 && rc.getRoundNum() > 30 || rc.getRoundNum() <= 2 && rc.getMoney() >= 300)) {
+                (rc.getMoney() >= 1030 && rc.getRoundNum() > 30 || rc.getRoundNum() <= 3 && rc.getMoney() >= 300)) {
             for (int i=11; i>=0; i--) {
                 if (rc.canBuildRobot(UnitType.MOPPER, spawnPlaces[i])) {
                     rc.buildRobot(UnitType.MOPPER, spawnPlaces[i]);
@@ -34,7 +34,7 @@ public class MoneyTower extends Tower {
             nextSpawn = chooseNextSpawntype();
         }
         if (nextSpawn == 1 && rc.getPaint() >= 200 &&
-                (rc.getMoney() >= 1030 && rc.getRoundNum() > 30 || rc.getRoundNum() <= 2 && rc.getMoney() >= 250)) {
+                (rc.getMoney() >= 1030 && rc.getRoundNum() > 30 || rc.getRoundNum() <= 3 && rc.getMoney() >= 250)) {
             for (int i=11; i>=0; i--) {
                 if (rc.canBuildRobot(UnitType.SOLDIER, spawnPlaces[i])) {
                     rc.buildRobot(UnitType.SOLDIER, spawnPlaces[i]);
