@@ -79,14 +79,15 @@ public abstract class Unit extends Robot {
         team = rc.getTeam();
 
         Message[] messages = rc.readMessages(-1);
-        if (messages.length > 0 && Math.random() > 0.4) {
+        if (messages.length > 0 && Math.random() > 0) {
             int msg = messages[0].getBytes();
             boolean isRuin = (msg & (1 << 31)) != 0;
-            if ((isRuin && rc.getType() == UnitType.SOLDIER) || (!isRuin && rc.getType() != UnitType.SOLDIER)) {
-                MapLocation receivedTarget = new MapLocation(msg & 0x3F, msg & 0xFC0 >> 6);
-                System.out.println(rc.getRoundNum() + " " + receivedTarget.x + ", " + receivedTarget.y);
-                target = receivedTarget;
+            if ((isRuin && rc.getType() == UnitType.SPLASHER) || (!isRuin && rc.getType() == UnitType.MOPPER)) {
+                return;
             }
+            MapLocation receivedTarget = new MapLocation(msg & 0x3F, msg & 0xFC0 >> 6);
+            System.out.println(rc.getRoundNum() + " " + receivedTarget.x + ", " + receivedTarget.y);
+            target = receivedTarget;
         }
     }
 
@@ -360,16 +361,14 @@ public abstract class Unit extends Robot {
                     case LEVEL_ONE_PAINT_TOWER:
                     case LEVEL_TWO_PAINT_TOWER:
                     case LEVEL_THREE_PAINT_TOWER:
-                        typ = 3;
+                    case LEVEL_ONE_MONEY_TOWER:
+                    case LEVEL_TWO_MONEY_TOWER:
+                    case LEVEL_THREE_MONEY_TOWER:
+                        typ = 1;
                         break;
                     case LEVEL_ONE_DEFENSE_TOWER:
                     case LEVEL_TWO_DEFENSE_TOWER:
                     case LEVEL_THREE_DEFENSE_TOWER:
-                        typ = 1;
-                        break;
-                    case LEVEL_ONE_MONEY_TOWER:
-                    case LEVEL_TWO_MONEY_TOWER:
-                    case LEVEL_THREE_MONEY_TOWER:
                         typ = 2;
                         break;
                     default:

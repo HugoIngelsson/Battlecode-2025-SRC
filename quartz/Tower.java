@@ -7,7 +7,7 @@ public abstract class Tower extends Robot {
     // todo: sometimes the indicator dot is just in a somewhat weird place lol
     MapLocation[] spawnPlaces;
     int AOE_DMG, TARGET_DMG, ATTACK_RANGE_SQ;
-
+    // keeps track of towers (not necessarily frontline but im too lazy rn)
     MapLocation[] frontlineLocs;
     int[] frontlineTimestamp;
     int[] frontlineType;
@@ -56,6 +56,7 @@ public abstract class Tower extends Robot {
 
     void turn1() throws GameActionException {
         home = rc.getLocation();
+        broadcastBirth();
     }
 
     abstract void play() throws GameActionException;
@@ -63,8 +64,27 @@ public abstract class Tower extends Robot {
     @Override
     void initTurn() throws GameActionException {
         decodeMessages();
+
+
         // read from buffer
         // scan environment
+    }
+
+
+    /**
+     * Tower-tower internet is literally 1776
+     * @throws GameActionException
+     */
+    void broadcastBirth() throws GameActionException{
+        int msg = 0;
+        msg |= Math.min(rc.getLocation().y, 63);
+        msg |= Math.min(rc.getLocation().x, 63) << 6;
+        msg |= 0x3000; // ally
+        msg |= Math.min((rc.getRoundNum()) / 10, 31) << 14; // idk
+
+        msg |= 1 << 31;
+        msg |= 1 << 30;
+        rc.broadcastMessage(msg);
     }
 
     MapLocation bestAttackTarget() throws GameActionException {
@@ -134,7 +154,7 @@ public abstract class Tower extends Robot {
     /**
      * Can you imagine an imaginary menagerie manager imagining managing an imaginary menagerie?
      */
-    void decodeMessages() {
+    void decodeMessages() throws GameActionException {
         sweepMessages();
         Message[] messages = rc.readMessages(rc.getRoundNum());
         for (int i = 0; i < messages.length; i++) {
@@ -164,7 +184,14 @@ public abstract class Tower extends Robot {
                 int posX = (msgBytes & 0x00000FC0) >> 6;
                 loc = new MapLocation(posX, posY);
                 type = (msgBytes & 0x00003000) >> 12;
+                int tt_msg = (msgBytes & 0x40000000) >> 30;
                 timestamp = rc.getRoundNum() - ((msgBytes & 0x0007C000) >> 14) * 10;
+
+                if((rc.getRoundNum() - timestamp) < 20 && tt_msg == 0){
+                    System.out.println("Relaying");
+                    msgBytes |= 0x40000000;
+                    rc.broadcastMessage(msgBytes);
+                }
             }
 
             if (!fullFrontline) {
@@ -210,6 +237,9 @@ public abstract class Tower extends Robot {
                 lowestDistance = frontlineLocs[i].distanceSquaredTo(newLoc);
             }
         }
+        if(lowestDistance == 0){
+            System.out.println("A baby tower was born");
+        }
         return outIndex;
     }
 
@@ -220,7 +250,8 @@ public abstract class Tower extends Robot {
      */
     void populateFrontline(MapLocation newLoc, int roundsSince, int type) {
         for (int i = 0; i < frontlineLocs.length; i++) {
-            if (frontlineLocs[i] == null) {
+            // check if loc is alr in frontline, if so update (tower-tower comms)
+            if (frontlineLocs[i] == null || frontlineLocs[i].equals(newLoc)) {
                 frontlineLocs[i] = newLoc;
                 frontlineTimestamp[i] = roundsSince;
                 frontlineType[i] = type;
