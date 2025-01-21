@@ -2,14 +2,15 @@ package quartz;
 
 import battlecode.common.*;
 
-import java.util.Map;
-
 public abstract class Tower extends Robot {
+    // todo: maybe make messages last longer but broadcaster each others' positions so we can get rid of our own towers as "frontline"
+    // todo: sometimes the indicator dot is just in a somewhat weird place lol
     MapLocation[] spawnPlaces;
     int AOE_DMG, TARGET_DMG, ATTACK_RANGE_SQ;
 
     MapLocation[] frontlineLocs;
-    int[] frontlineTimestampsSince;
+    int[] frontlineTimestamp;
+    int[] frontlineType;
     boolean fullFrontline;
 
     public Tower(RobotController rc) throws GameActionException {
@@ -32,7 +33,8 @@ public abstract class Tower extends Robot {
         sortSpawnPlaces();
 
         frontlineLocs = new MapLocation[5];
-        frontlineTimestampsSince = new int[5];
+        frontlineTimestamp = new int[5];
+        frontlineType = new int[5];
         fullFrontline = false;
     }
 
@@ -133,60 +135,64 @@ public abstract class Tower extends Robot {
      * Can you imagine an imaginary menagerie manager imagining managing an imaginary menagerie?
      */
     void decodeMessages() {
+        sweepMessages();
         Message[] messages = rc.readMessages(rc.getRoundNum());
         for (int i = 0; i < messages.length; i++) {
             int msgBytes = messages[i].getBytes();
             MapLocation loc;
-            int roundsSince;
-            double priority = 0;
+            int timestamp;
+            int type;
+            // double priority = 0;
             if ((msgBytes & 0x80000000) == 0) {
+                break;
                 // decode frontline info, i know these are local but it kinda depends how we wanna store this stuff
                 // maybe into an array? idk
-                int posY = msgBytes & 0x0000003F;
+                /*int posY = msgBytes & 0x0000003F;
                 int posX = (msgBytes & 0x00000FC0) >> 6;
                 loc = new MapLocation(posX, posY);
                 double enemyUnitRatio = Math.pow(2, ((msgBytes & 0x00007000) >> 12) - 1);
-                roundsSince = ((msgBytes & 0x000F8000) >> 15) * 10;
-                int timestamp = rc.getRoundNum() - roundsSince;
+                timestamp = rc.getRoundNum() - ((msgBytes & 0x000F8000) >> 15) * 10;
                 int enemyMoppers = (msgBytes & 0x00700000) >> 20;
                 int enemySoldiers = (msgBytes & 0x03800000) >> 23;
                 int enemySplashers = (msgBytes & 0x1C000000) >> 26;
                 double enemyTileRatio = Math.pow(2, ((msgBytes & 0x60000000) >> 29) - 1);
 
-                priority = 2 - (1 / enemyTileRatio) - (1 / enemyUnitRatio);
+                priority = 1.8 - (1 / enemyTileRatio) - (1 / enemyUnitRatio);*/
             } else {
                 // decode tower info, same deal about how to store this
                 int posY = msgBytes & 0x0000003F;
                 int posX = (msgBytes & 0x00000FC0) >> 6;
                 loc = new MapLocation(posX, posY);
-                int type = (msgBytes & 0x00003000) >> 12;
-                if (type == 0) {
-                    return;
-                }
-                roundsSince = ((msgBytes & 0x0007C000) >> 14) * 10;
-                int timestamp = rc.getRoundNum() - roundsSince;
+                type = (msgBytes & 0x00003000) >> 12;
+                timestamp = rc.getRoundNum() - ((msgBytes & 0x0007C000) >> 14) * 10;
             }
 
-            if (priority > -0.1) {
-                if (!fullFrontline) {
-                    populateFrontline(loc, roundsSince);
-                } else {
-                    int index = findNearbyFrontline(loc);
-                    if (index == -1) {
-                        for (int j = 0; j < frontlineLocs.length; j++) {
-                            System.out.println(frontlineLocs[j]);
-                        }
-                    }
-                    if (frontlineTimestampsSince[index] >= 100) {
-                        frontlineLocs[index] = loc;
-                        frontlineTimestampsSince[index] = roundsSince;
-                    } else if (frontlineTimestampsSince[index] - 20 < roundsSince) {
-                        reestimateFrontline(loc, index, roundsSince, 1, priority);
-                    } else {
-                        reestimateFrontline(loc, index, roundsSince, 0.5, priority);
+            if (!fullFrontline) {
+                populateFrontline(loc, timestamp, type);
+            } else {
+                int index = findNearbyFrontline(loc);
+                if (index == -1) {
+                    for (int j = 0; j < frontlineLocs.length; j++) {
+                        // not good
+                        System.out.println(frontlineLocs[j]);
                     }
                 }
+                /*
+                if (rc.getRoundNum() - frontlineTimestamp[index] >= 40) {
+                    frontlineLocs[index] = loc;
+                    frontlineTimestamp[index] = timestamp;
+                } else if (Math.abs(timestamp - frontlineTimestamp[index]) < 20) {
+                    reestimateFrontline(loc, index, timestamp, .95, type);
+                } else {
+                    reestimateFrontline(loc, index, timestamp, 0.3, type);
+                }*/
+
+                // potentially implement an encoding that distinguishes between ruins/enemies (esp for soldiers)
+                frontlineLocs[index] = loc;
+                frontlineTimestamp[index] = timestamp;
+                frontlineType[index] = type;
             }
+
         }
     }
 
@@ -196,7 +202,7 @@ public abstract class Tower extends Robot {
      * @return the library books
      */
     int findNearbyFrontline(MapLocation newLoc) {
-        int lowestDistance = 2000;
+        int lowestDistance = 10000;
         int outIndex = -1;
         for (int i = 0; i < frontlineLocs.length; i++) {
             if (frontlineLocs[i] != null && frontlineLocs[i].distanceSquaredTo(newLoc) < lowestDistance) {
@@ -212,26 +218,36 @@ public abstract class Tower extends Robot {
      *
      * @param newLoc if you do it i'll do it
      */
-    void populateFrontline(MapLocation newLoc, int roundsSince) {
+    void populateFrontline(MapLocation newLoc, int roundsSince, int type) {
         for (int i = 0; i < frontlineLocs.length; i++) {
             if (frontlineLocs[i] == null) {
                 frontlineLocs[i] = newLoc;
-                frontlineTimestampsSince[i] = roundsSince;
+                frontlineTimestamp[i] = roundsSince;
+                frontlineType[i] = type;
                 return;
             }
         }
         fullFrontline = true;
     }
 
-    void reestimateFrontline(MapLocation newLoc, int index, int roundsSince, double priorityBenchmark, double priority) {
-        if (priority < priorityBenchmark || frontlineTimestampsSince[index] < roundsSince) {
+    /**
+     * currently shelved
+     *
+     * @param newLoc
+     * @param index
+     * @param timestamp
+     * @param priorityBenchmark
+     * @param priority
+     */
+    void reestimateFrontline(MapLocation newLoc, int index, int timestamp, double priorityBenchmark, double priority) {
+        if (priority < priorityBenchmark || frontlineTimestamp[index] > timestamp) {
             int newX = (newLoc.x + frontlineLocs[index].x) / 2;
             int newY = (newLoc.y + frontlineLocs[index].y) / 2;
             frontlineLocs[index] = new MapLocation(newX, newY);
-            frontlineTimestampsSince[index] = (frontlineTimestampsSince[index] + roundsSince) / 2;
+            frontlineTimestamp[index] = (frontlineTimestamp[index] + timestamp) / 2;
         } else {
             frontlineLocs[index] = newLoc;
-            frontlineTimestampsSince[index] = roundsSince;
+            frontlineTimestamp[index] = timestamp;
         }
     }
 
@@ -245,7 +261,13 @@ public abstract class Tower extends Robot {
         }
         if (rc.canSendMessage(robotLoc) && lastLocIndex >= 0) {
             int index = (int) (Math.random() * (lastLocIndex + 1));
-            rc.sendMessage(robotLoc, frontlineLocs[index].x | frontlineLocs[index].y << 6);
+            int msg = 0;
+            msg |= frontlineLocs[index].x;
+            msg |= frontlineLocs[index].y << 6;
+            if (frontlineType[index] == 0) {
+                msg |= (1 << 31);
+            }
+            rc.sendMessage(robotLoc, msg);
         }
     }
 
@@ -266,6 +288,25 @@ public abstract class Tower extends Robot {
             return 1;
         } else {
             return 0;
+        }
+    }
+
+    /**
+     * out with the old and in with the new (254 no way)
+     */
+    void sweepMessages() {
+        for (int i = 0; i < frontlineLocs.length; i++) {
+            if (frontlineLocs[i] != null && rc.getRoundNum() - frontlineTimestamp[i] > 100) {
+                fullFrontline = false;
+                for (int j = i; j < frontlineLocs.length - 1; j++) {
+                    frontlineLocs[j] = frontlineLocs[j + 1];
+                    frontlineTimestamp[j] = frontlineTimestamp[j + 1];
+                    frontlineType[j] = frontlineType[j + 1];
+                }
+                frontlineLocs[4] = null;
+                frontlineTimestamp[4] = 0;
+                frontlineType[4] = 0;
+            }
         }
     }
 }

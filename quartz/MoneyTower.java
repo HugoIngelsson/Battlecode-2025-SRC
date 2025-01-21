@@ -15,6 +15,17 @@ public class MoneyTower extends Tower {
     }
 
     void play() throws GameActionException {
+        int firstNull = -1;
+        for (int i = 0; i < frontlineLocs.length; i++) {
+            if (frontlineLocs[i] == null) {
+                firstNull = i;
+                break;
+            }
+            firstNull = 5;
+        }
+        if (firstNull > 0) {
+            rc.setIndicatorDot(frontlineLocs[rc.getRoundNum() % (firstNull)], 0, 0, 255);
+        }
         rc.attack(null);
         MapLocation target = bestAttackTarget();
         if (target != null) {

@@ -79,11 +79,14 @@ public abstract class Unit extends Robot {
         team = rc.getTeam();
 
         Message[] messages = rc.readMessages(-1);
-        if (messages.length > 0 && rc.getType() != UnitType.SOLDIER) {
+        if (messages.length > 0 && Math.random() > 0.4) {
             int msg = messages[0].getBytes();
-            MapLocation receivedTarget = new MapLocation(msg & 0x3F, msg & 0xFC0 >> 6);
-            System.out.println(rc.getRoundNum() + " " + receivedTarget.x + ", " + receivedTarget.y);
-            target = receivedTarget;
+            boolean isRuin = (msg & (1 << 31)) != 0;
+            if ((isRuin && rc.getType() == UnitType.SOLDIER) || (!isRuin && rc.getType() != UnitType.SOLDIER)) {
+                MapLocation receivedTarget = new MapLocation(msg & 0x3F, msg & 0xFC0 >> 6);
+                System.out.println(rc.getRoundNum() + " " + receivedTarget.x + ", " + receivedTarget.y);
+                target = receivedTarget;
+            }
         }
     }
 
