@@ -16,17 +16,8 @@ public class DefenseTower extends Tower {
     }
 
     void play() throws GameActionException {
-        int firstNull = -1;
-        for (int i = 0; i < frontlineLocs.length; i++) {
-            if (frontlineLocs[i] == null) {
-                firstNull = i;
-                break;
-            }
-            firstNull = 5;
-        }
-        if (firstNull > 0) {
-            rc.setIndicatorDot(frontlineLocs[rc.getRoundNum() % (firstNull)], 0, 0, 255);
-        }
+        indicateKnown();
+
         rc.attack(null);
         MapLocation target = bestAttackTarget();
         if (target != null) {
@@ -46,9 +37,10 @@ public class DefenseTower extends Tower {
         if (nextSpawn == 0 && rc.getPaint() >= 100 &&
                 (rc.getMoney() >= 1030 && rc.getRoundNum() > 30  || rc.getRoundNum() == 1 && rc.getMoney() >= 300)) {
             for (int i=11; i>=0; i--) {
-                if (rc.canBuildRobot(UnitType.MOPPER, spawnPlaces[i])) {
-                    rc.buildRobot(UnitType.MOPPER, spawnPlaces[i]);
-                    messageSpawnedRobot(spawnPlaces[i]);
+                int id = (int)(Math.random() * 12);
+                if (rc.canBuildRobot(UnitType.MOPPER, spawnPlaces[id])) {
+                    rc.buildRobot(UnitType.MOPPER, spawnPlaces[id]);
+                    messageSpawnedRobot(spawnPlaces[id]);
                     break;
                 }
             }
@@ -58,9 +50,10 @@ public class DefenseTower extends Tower {
         if (nextSpawn == 1 && rc.getPaint() >= 200 &&
                 (rc.getMoney() >= 1030 && rc.getRoundNum() > 30 || rc.getRoundNum() <= 2 && rc.getMoney() >= 250)) {
             for (int i=11; i>=0; i--) {
-                if (rc.canBuildRobot(UnitType.SOLDIER, spawnPlaces[i])) {
-                    rc.buildRobot(UnitType.SOLDIER, spawnPlaces[i]);
-                    messageSpawnedRobot(spawnPlaces[i]);
+                int id = (int)(Math.random() * 12);
+                if (rc.canBuildRobot(UnitType.SOLDIER, spawnPlaces[id])) {
+                    rc.buildRobot(UnitType.SOLDIER, spawnPlaces[id]);
+                    messageSpawnedRobot(spawnPlaces[id]);
                     break;
                 }
             }
@@ -69,9 +62,10 @@ public class DefenseTower extends Tower {
         }
         else if (nextSpawn == 3 && rc.getPaint() >= 300 && rc.getMoney() >= 1030) {
             for (int i=11; i>=0; i--) {
-                if (rc.canBuildRobot(UnitType.SPLASHER, spawnPlaces[i])) {
-                    rc.buildRobot(UnitType.SPLASHER, spawnPlaces[i]);
-                    messageSpawnedRobot(spawnPlaces[i]);
+                int id = (int)(Math.random() * 12);
+                if (rc.canBuildRobot(UnitType.SPLASHER, spawnPlaces[id])) {
+                    rc.buildRobot(UnitType.SPLASHER, spawnPlaces[id]);
+                    messageSpawnedRobot(spawnPlaces[id]);
                     break;
                 }
             }
@@ -82,6 +76,6 @@ public class DefenseTower extends Tower {
 
     @Override
     void endTurn() throws GameActionException {
-
+        super.endTurn();
     }
 }

@@ -251,8 +251,8 @@ public class Mopper extends Unit {
 
             if (ri != null) {
 
-                if (rc.canSendMessage(ri.getLocation()) && retreating) {
-                    rc.sendMessage(ri.getLocation(), constructMessage(rc.getRoundNum() % 2 == 0));
+                if (rc.canSendMessage(ri.getLocation())) {
+                    rc.sendMessage(ri.getLocation(), constructMessage(true));
                 }
                 UnitType tp = ri.getType();
 

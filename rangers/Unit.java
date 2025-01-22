@@ -85,9 +85,10 @@ public abstract class Unit extends Robot {
             if ((isRuin && rc.getType() == UnitType.SPLASHER) || (!isRuin && rc.getType() == UnitType.MOPPER)) {
                 return;
             }
-            MapLocation receivedTarget = new MapLocation(msg & 0x3F, msg & 0xFC0 >> 6);
+            MapLocation receivedTarget = new MapLocation((msg & 0xFC0) >> 6, msg & 0x3F);
             System.out.println(rc.getRoundNum() + " " + receivedTarget.x + ", " + receivedTarget.y);
             target = receivedTarget;
+            blockNewTarget = true;
         }
     }
 
@@ -104,6 +105,9 @@ public abstract class Unit extends Robot {
 
         if (rc.getPaint() == 0)
             rc.disintegrate();
+
+        if (lastEnemyTower != null)
+            rc.setIndicatorDot(lastEnemyTower, 0, 255, 255);
     }
 
     void markRuin(MapLocation loc, UnitType type) throws GameActionException {
@@ -335,7 +339,7 @@ public abstract class Unit extends Robot {
      *
      * @return emotional music and they were singin' bye bye miss american pie drove the chevy to the levy but the
      */
-    int constructMessage(boolean towerMsg) {
+    int constructMessage(boolean towerMsg) throws GameActionException {
 //        int msgs[] = new int[2];
         int msg = 0;
         if(!towerMsg) {
@@ -375,6 +379,7 @@ public abstract class Unit extends Robot {
                         typ = -1;
                         break;
                 }
+                rc.setIndicatorDot(lastEnemyTower, 0, 255, 255);
                 msg |= Math.min(lastEnemyTower.y, 63);
                 msg |= Math.min(lastEnemyTower.x, 63) << 6;
                 msg |= typ << 12;

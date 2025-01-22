@@ -12,6 +12,7 @@ public abstract class Tower extends Robot {
     int[] frontlineTimestamp;
     int[] frontlineType;
     boolean fullFrontline;
+    int lastBroadcasted = 0;
 
     public Tower(RobotController rc) throws GameActionException {
         super(rc);
@@ -32,10 +33,14 @@ public abstract class Tower extends Robot {
 
         sortSpawnPlaces();
 
-        frontlineLocs = new MapLocation[5];
-        frontlineTimestamp = new int[5];
-        frontlineType = new int[5];
+        frontlineLocs = new MapLocation[50];
+        frontlineTimestamp = new int[50];
+        frontlineType = new int[50];
         fullFrontline = false;
+
+        for (int i=0; i<50; i++) {
+            frontlineTimestamp[i] = Integer.MAX_VALUE / 2;
+        }
     }
 
     void sortSpawnPlaces() {
@@ -70,17 +75,29 @@ public abstract class Tower extends Robot {
         // scan environment
     }
 
+    @Override
+    void endTurn() throws GameActionException {
+        for (int i=0; i<frontlineLocs.length; i++) {
+            if (frontlineLocs[i] != null)
+                frontlineTimestamp[i]++;
+            else
+                break;
+        }
+
+        endOfTurnRelay();
+    }
+
 
     /**
      * Tower-tower internet is literally 1776
      * @throws GameActionException
      */
-    void broadcastBirth() throws GameActionException{
+    void broadcastBirth() throws GameActionException {
         int msg = 0;
         msg |= Math.min(rc.getLocation().y, 63);
         msg |= Math.min(rc.getLocation().x, 63) << 6;
-        msg |= 0x3000; // ally
-        msg |= Math.min((rc.getRoundNum()) / 10, 31) << 14; // idk
+        msg |= 3 << 12; // ally
+//        msg |= Math.min((rc.getRoundNum()) / 10, 31) << 14; // idk
 
         msg |= 1 << 31;
         msg |= 1 << 30;
@@ -155,8 +172,8 @@ public abstract class Tower extends Robot {
      * Can you imagine an imaginary menagerie manager imagining managing an imaginary menagerie?
      */
     void decodeMessages() throws GameActionException {
-        sweepMessages();
-        Message[] messages = rc.readMessages(rc.getRoundNum());
+//        sweepMessages();
+        Message[] messages = rc.readMessages(rc.getRoundNum()-1);
         for (int i = 0; i < messages.length; i++) {
             int msgBytes = messages[i].getBytes();
             MapLocation loc;
@@ -164,7 +181,7 @@ public abstract class Tower extends Robot {
             int type;
             // double priority = 0;
             if ((msgBytes & 0x80000000) == 0) {
-                break;
+                continue;
                 // decode frontline info, i know these are local but it kinda depends how we wanna store this stuff
                 // maybe into an array? idk
                 /*int posY = msgBytes & 0x0000003F;
@@ -184,41 +201,42 @@ public abstract class Tower extends Robot {
                 int posX = (msgBytes & 0x00000FC0) >> 6;
                 loc = new MapLocation(posX, posY);
                 type = (msgBytes & 0x00003000) >> 12;
-                int tt_msg = (msgBytes & 0x40000000) >> 30;
-                timestamp = rc.getRoundNum() - ((msgBytes & 0x0007C000) >> 14) * 10;
+//                int tt_msg = (msgBytes & 0x40000000) >> 30;
+                timestamp = ((msgBytes & 0x0007C000) >> 14) * 10;
 
-                if((rc.getRoundNum() - timestamp) < 20 && tt_msg == 0){
-                    System.out.println("Relaying");
-                    msgBytes |= 0x40000000;
-                    rc.broadcastMessage(msgBytes);
-                }
+//                if((rc.getRoundNum() - timestamp) < 20 && tt_msg == 0){
+//                    System.out.println("Relaying");
+//                    msgBytes |= 0x40000000;
+//                    rc.broadcastMessage(msgBytes);
+//                }
             }
 
-            if (!fullFrontline) {
-                populateFrontline(loc, timestamp, type);
-            } else {
-                int index = findNearbyFrontline(loc);
-                if (index == -1) {
-                    for (int j = 0; j < frontlineLocs.length; j++) {
-                        // not good
-                        System.out.println(frontlineLocs[j]);
-                    }
-                }
-                /*
-                if (rc.getRoundNum() - frontlineTimestamp[index] >= 40) {
-                    frontlineLocs[index] = loc;
-                    frontlineTimestamp[index] = timestamp;
-                } else if (Math.abs(timestamp - frontlineTimestamp[index]) < 20) {
-                    reestimateFrontline(loc, index, timestamp, .95, type);
-                } else {
-                    reestimateFrontline(loc, index, timestamp, 0.3, type);
-                }*/
-
-                // potentially implement an encoding that distinguishes between ruins/enemies (esp for soldiers)
-                frontlineLocs[index] = loc;
-                frontlineTimestamp[index] = timestamp;
-                frontlineType[index] = type;
-            }
+            populateFrontline(loc, timestamp, type);
+//            if (!fullFrontline) {
+//                populateFrontline(loc, timestamp, type);
+//            } else {
+//                int index = findNearbyFrontline(loc);
+//                if (index == -1) {
+//                    for (int j = 0; j < frontlineLocs.length; j++) {
+//                        // not good
+//                        System.out.println(frontlineLocs[j]);
+//                    }
+//                }
+//                /*
+//                if (rc.getRoundNum() - frontlineTimestamp[index] >= 40) {
+//                    frontlineLocs[index] = loc;
+//                    frontlineTimestamp[index] = timestamp;
+//                } else if (Math.abs(timestamp - frontlineTimestamp[index]) < 20) {
+//                    reestimateFrontline(loc, index, timestamp, .95, type);
+//                } else {
+//                    reestimateFrontline(loc, index, timestamp, 0.3, type);
+//                }*/
+//
+//                // potentially implement an encoding that distinguishes between ruins/enemies (esp for soldiers)
+//                frontlineLocs[index] = loc;
+//                frontlineTimestamp[index] = timestamp;
+//                frontlineType[index] = type;
+//            }
 
         }
     }
@@ -252,6 +270,10 @@ public abstract class Tower extends Robot {
         for (int i = 0; i < frontlineLocs.length; i++) {
             // check if loc is alr in frontline, if so update (tower-tower comms)
             if (frontlineLocs[i] == null || frontlineLocs[i].equals(newLoc)) {
+                if (roundsSince > frontlineTimestamp[i]) {
+                    return;
+                }
+
                 frontlineLocs[i] = newLoc;
                 frontlineTimestamp[i] = roundsSince;
                 frontlineType[i] = type;
@@ -283,29 +305,49 @@ public abstract class Tower extends Robot {
     }
 
     void messageSpawnedRobot(MapLocation robotLoc) throws GameActionException {
-        int lastLocIndex = 4;
-        for (int i = 0; i < frontlineLocs.length; i++) {
-            if (frontlineLocs[i] == null) {
-                lastLocIndex = i - 1;
+        int bestID = -1;
+        int bestVal = Integer.MIN_VALUE;
+
+        UnitType type = rc.senseRobotAtLocation(robotLoc).type;
+        for (int i=0; i<frontlineLocs.length; i++) {
+            if (frontlineLocs[i] == null)
                 break;
+
+            int val = -robotLoc.distanceSquaredTo(rc.getLocation());
+            if (frontlineType[i] == 0 && type == UnitType.MOPPER)
+                val += 500;
+            else if (frontlineType[i] == 1 && type == UnitType.SPLASHER)
+                val += 500;
+            else if (frontlineType[i] == 2)
+                val -= 500;
+            else if (frontlineType[i] == 3)
+                continue;
+
+            if (val > bestVal) {
+                bestVal = val;
+                bestID = i;
             }
         }
-        if (rc.canSendMessage(robotLoc) && lastLocIndex >= 0) {
-            int index = (int) (Math.random() * (lastLocIndex + 1));
-            int msg = 0;
-            msg |= frontlineLocs[index].x;
-            msg |= frontlineLocs[index].y << 6;
-            if (frontlineType[index] == 0) {
-                msg |= (1 << 31);
-            }
-            rc.sendMessage(robotLoc, msg);
+
+        if (bestID != -1)
+            messageBotWithFrontline(robotLoc, bestID);
+    }
+
+    void messageBotWithFrontline(MapLocation bot, int i) throws GameActionException {
+        int msg = 0;
+        msg |= frontlineLocs[i].y;
+        msg |= (frontlineLocs[i].x << 6);
+        if (frontlineType[i] == 0) {
+            msg |= (1 << 31);
         }
+
+        if (rc.canSendMessage(bot))
+            rc.sendMessage(bot, msg);
     }
 
     int chooseNextSpawntype() {
         if (rc.getRoundNum() <= 5) {
             if (rc.getType() == UnitType.LEVEL_ONE_MONEY_TOWER) {
-                System.out.println("HI");
                 if (rc.getRoundNum() == 1)
                     return 0;
             }
@@ -315,7 +357,8 @@ public abstract class Tower extends Robot {
         if ((rc.getPaint() >= 300 || rc.getType().getBaseType() == UnitType.LEVEL_ONE_PAINT_TOWER)
                 && Math.random() < 0.4 * rc.getRoundNum() / (10.0 + rc.getRoundNum())) {
             return 3;
-        } else if (Math.random() < 0.6){
+        } else if ((rc.getPaint() >= 200 || rc.getType().getBaseType() == UnitType.LEVEL_ONE_PAINT_TOWER) &&
+                Math.random() < 0.6){
             return 1;
         } else {
             return 0;
@@ -334,10 +377,63 @@ public abstract class Tower extends Robot {
                     frontlineTimestamp[j] = frontlineTimestamp[j + 1];
                     frontlineType[j] = frontlineType[j + 1];
                 }
-                frontlineLocs[4] = null;
-                frontlineTimestamp[4] = 0;
-                frontlineType[4] = 0;
+                frontlineLocs[49] = null;
+                frontlineTimestamp[49] = 0;
+                frontlineType[49] = 0;
             }
+        }
+    }
+
+    void indicateKnown() throws GameActionException {
+        for (int i=frontlineLocs.length-1; i>=0; i--) {
+            if (frontlineLocs[i] != null) {
+                int type = frontlineType[i];
+                switch (type) {
+                    case 0:
+                        rc.setIndicatorDot(frontlineLocs[i], 255, 0, 0);
+                        break;
+                    case 1:
+                        rc.setIndicatorDot(frontlineLocs[i], 255, 255, 0);
+                        break;
+                    case 2:
+                        rc.setIndicatorDot(frontlineLocs[i], 0, 255, 0);
+                        break;
+                    case 3:
+                        rc.setIndicatorDot(frontlineLocs[i], 0, 255, 255);
+                        break;
+                }
+            }
+        }
+    }
+
+    void endOfTurnRelay() throws GameActionException {
+        if (rc.canBroadcastMessage())
+            broadcastBirth();
+
+        if (frontlineLocs[0] == null) {
+            return;
+        }
+
+        int firstBroadcast = lastBroadcasted;
+        int broadcasted = 0;
+        while (broadcasted++ < 5 && rc.canBroadcastMessage() && Clock.getBytecodesLeft() > 400) {
+            lastBroadcasted++;
+            if (lastBroadcasted == frontlineLocs.length || frontlineLocs[lastBroadcasted] == null)
+                lastBroadcasted = 0;
+
+            if (frontlineLocs[lastBroadcasted].equals(rc.getLocation()))
+                continue;
+
+            int msg = 0xC0000000;
+            msg |= Math.min(63, frontlineLocs[lastBroadcasted].y);
+            msg |= Math.min(63, frontlineLocs[lastBroadcasted].x) << 6;
+            msg |= Math.min(3, frontlineType[lastBroadcasted]) << 12;
+            msg |= Math.min(31, (frontlineTimestamp[lastBroadcasted] / 10) + 1) << 14;
+
+            rc.broadcastMessage(msg);
+
+            if (lastBroadcasted == firstBroadcast)
+                break;
         }
     }
 }

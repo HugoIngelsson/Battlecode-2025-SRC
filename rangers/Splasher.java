@@ -28,7 +28,7 @@ public class Splasher extends Unit {
         else if (closestRuin != null && numEnemyPaintNearby(closestRuin) >= 10) {
             target = closestRuin;
         }
-        else if (target == null) {
+        else if (!blockNewTarget) {
             int x = rng.nextInt(rc.getMapWidth());
             int y = rng.nextInt(rc.getMapHeight());
             if (rc.getRoundNum() < 50) {
@@ -38,6 +38,7 @@ public class Splasher extends Unit {
 
             target = new MapLocation(x, y);
             retreating = false;
+            blockNewTarget = true;
         } else {
             retreating = false;
         }
@@ -59,6 +60,10 @@ public class Splasher extends Unit {
             target = null;
         } else if (target == lastPainTower && rc.getPaint() > 50) { // HERE
             target = null;
+        }
+
+        if (blockNewTarget && (target == null || rc.getLocation().distanceSquaredTo(target) < 15)) {
+            blockNewTarget = false;
         }
 
         if (target != null && rc.onTheMap(target))
@@ -235,8 +240,8 @@ public class Splasher extends Unit {
                 ret = m;
             }
             if (ri != null) {
-                if (rc.canSendMessage(ri.getLocation()) && retreating) {
-                    rc.sendMessage(ri.getLocation(), constructMessage(rc.getRoundNum() % 2 == 0));
+                if (rc.canSendMessage(ri.getLocation())) {
+                    rc.sendMessage(ri.getLocation(), constructMessage(true));
                 }
 
 

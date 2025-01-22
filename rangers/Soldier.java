@@ -402,8 +402,8 @@ public class Soldier extends Unit {
                 }
             }
             else if (ri != null) {
-                if (rc.canSendMessage(ri.getLocation()) && retreating) {
-                    rc.sendMessage(ri.getLocation(), constructMessage(rc.getRoundNum() % 2 == 0));
+                if (rc.canSendMessage(ri.getLocation())) {
+                    rc.sendMessage(ri.getLocation(), constructMessage(true));
                 }
 
                 // मैं दुनिया पर राज करता था। जब मैं वचन देता तो आंखें उठ जातीं!!
@@ -418,7 +418,7 @@ public class Soldier extends Unit {
                     }
                 }
 
-                if (ri.getTeam() != rc.getTeam()){
+                if (ri.getTeam() != rc.getTeam()) {
                     lastEnemyTower = ri.getLocation();
                     lastEnemyTowerType = tp;
                     enemyTowerTurn = rc.getRoundNum();
