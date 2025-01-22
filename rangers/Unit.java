@@ -1,4 +1,4 @@
-package quartz;
+package rangers;
 
 import battlecode.common.*;
 
@@ -78,7 +78,6 @@ public abstract class Unit extends Robot {
         }
         team = rc.getTeam();
 
-        /*
         Message[] messages = rc.readMessages(-1);
         if (messages.length > 0 && Math.random() > 0) {
             int msg = messages[0].getBytes();
@@ -89,7 +88,7 @@ public abstract class Unit extends Robot {
             MapLocation receivedTarget = new MapLocation(msg & 0x3F, msg & 0xFC0 >> 6);
             System.out.println(rc.getRoundNum() + " " + receivedTarget.x + ", " + receivedTarget.y);
             target = receivedTarget;
-        }*/
+        }
     }
 
     void initTurn() throws GameActionException {
