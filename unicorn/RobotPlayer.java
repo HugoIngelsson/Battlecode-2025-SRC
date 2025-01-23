@@ -1,4 +1,4 @@
-package quartz;
+package unicorn;
 
 import battlecode.common.Clock;
 import battlecode.common.Direction;
@@ -31,9 +31,12 @@ public class RobotPlayer {
             case SOLDIER: r = new Soldier(rc); break;
             case SPLASHER: r = new Splasher(rc); break;
             case MOPPER: r = new Mopper(rc); break;
-            case LEVEL_ONE_DEFENSE_TOWER: r = new DefenseTower(rc); break;
-            case LEVEL_ONE_MONEY_TOWER: r = new MoneyTower(rc); break;
-            case LEVEL_ONE_PAINT_TOWER: r = new PaintTower(rc); break;
+            case LEVEL_ONE_DEFENSE_TOWER:
+            case LEVEL_TWO_DEFENSE_TOWER: r = new DefenseTower(rc); break;
+            case LEVEL_ONE_MONEY_TOWER:
+            case LEVEL_TWO_MONEY_TOWER: r = new MoneyTower(rc); break;
+            case LEVEL_ONE_PAINT_TOWER:
+            case LEVEL_TWO_PAINT_TOWER: r = new PaintTower(rc); break;
             default: // PANIC! Shouldn't reach
                 r = null;
                 return;
