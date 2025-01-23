@@ -1,4 +1,4 @@
-package quartz;
+package triton;
 
 import battlecode.common.Clock;
 import battlecode.common.Direction;
