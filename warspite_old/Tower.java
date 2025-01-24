@@ -14,7 +14,6 @@ public abstract class Tower extends Robot {
     boolean fullFrontline;
     int lastBroadcasted = 0;
     int turnSpawned;
-    MapLocation target;
 
     public Tower(RobotController rc) throws GameActionException {
         super(rc);
@@ -282,11 +281,10 @@ public abstract class Tower extends Robot {
     }
 
     MapLocation bestSplasherLoc, bestMopperLoc, bestSoldierLoc;
-    int bestSplasherScore, bestMopperScore, bestSoldierScore;
     void determineBestDestinations() {
-        bestSplasherScore = Integer.MIN_VALUE;
-        bestMopperScore = Integer.MIN_VALUE;
-        bestSoldierScore = Integer.MIN_VALUE;
+        int bestSplasherScore = Integer.MIN_VALUE;
+        int bestMopperScore = Integer.MIN_VALUE;
+        int bestSoldierScore = Integer.MIN_VALUE;
 
         for (int i=0; i<frontlineLocs.length; i++) {
             if (frontlineLocs[i] == null)
@@ -355,13 +353,8 @@ public abstract class Tower extends Robot {
             return 1;
         }
 
-        double splasherSkew = 0.2;
-        if (target != null || bestSplasherScore > -200)
-            splasherSkew += 0.3;
-        splasherSkew *= rc.getRoundNum() / (10.0 + rc.getRoundNum());
-
         if ((rc.getPaint() >= 300 || rc.getType().getBaseType() == UnitType.LEVEL_ONE_PAINT_TOWER)
-                && Math.random() < splasherSkew) {
+                && Math.random() < 0.4 * rc.getRoundNum() / (10.0 + rc.getRoundNum())) {
             return 3;
         } else if ((rc.getPaint() >= 200 || rc.getType().getBaseType() == UnitType.LEVEL_ONE_PAINT_TOWER) &&
                 Math.random() < 0.6) {

@@ -19,7 +19,7 @@ public class DefenseTower extends Tower {
         indicateKnown();
 
         rc.attack(null);
-        target = bestAttackTarget();
+        MapLocation target = bestAttackTarget();
         if (target != null) {
             rc.attack(target);
         }
