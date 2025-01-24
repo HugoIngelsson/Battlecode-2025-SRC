@@ -124,6 +124,10 @@ public class Soldier extends Unit {
                 rc.getLocation().distanceSquaredTo(target) == 1) {
             if (rc.senseMapInfo(target.add(Direction.NORTH)).getMark() == PaintType.EMPTY) {
 
+                if (rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length >= 2) {
+                    markRuin(target, UnitType.LEVEL_ONE_DEFENSE_TOWER);
+                    System.out.println("Marked a ruin for a defense tower");
+                }
                 if (rng.nextInt(100) < 60 || rc.getNumberTowers() == 2) {
                     markRuin(target, UnitType.LEVEL_ONE_MONEY_TOWER);
                     System.out.println("Marked a ruin for a money tower");

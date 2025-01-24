@@ -100,7 +100,12 @@ public abstract class Tower extends Robot {
         int msg = 0;
         msg |= Math.min(rc.getLocation().y, 63);
         msg |= Math.min(rc.getLocation().x, 63) << 6;
-        msg |= 3 << 12; // ally
+
+        if (rc.getHealth() > rc.getType().health / 7) {
+            msg |= 3 << 12; // ally
+        } else {
+            rc.setIndicatorString("dying");
+        }
 //        msg |= Math.min((rc.getRoundNum()) / 10, 31) << 14; // idk
 
         msg |= 1 << 31;
