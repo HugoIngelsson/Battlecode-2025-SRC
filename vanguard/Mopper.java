@@ -6,16 +6,27 @@ public class Mopper extends Unit {
     private static final int MAX_PAINT = 100;
 
     MapInfo[] mopLocations;
+    MapLocation avoidCrowdingRuin = null;
+    int timeoutTurns = 0;
     public Mopper(RobotController rc) throws GameActionException {
         super(rc);
     }
 
     void play() throws GameActionException {
         closestRuin = getClosestRuin();
+        timeoutTurns--;
 
-        if(closestRuin != null){
+        if (closestRuin != null){
             lastRuinSeen = closestRuin;
             ruinTurn = rc.getRoundNum();
+
+            if (nothingLeftToRemoveRuin(closestRuin)) {
+                if (!closestRuin.equals(avoidCrowdingRuin)) {
+                    avoidCrowdingRuin = closestRuin;
+                    timeoutTurns = 5;
+                }
+            }
+
         }
 
         mopLocations = rc.senseNearbyMapInfos(4);
@@ -50,7 +61,7 @@ public class Mopper extends Unit {
             targetIsRuin = false;
             retreating = false;
         }
-        else if (closestRuin != null) {
+        else if (closestRuin != null && (!closestRuin.equals(avoidCrowdingRuin) || timeoutTurns > 0)) {
             target = closestRuin;
             retreating = false;
         }
@@ -110,6 +121,22 @@ public class Mopper extends Unit {
                     else {
                         rc.attack(paintLoc);
                     }
+                }
+            }
+        }
+
+        if (target == closestRuin && target != null) {
+            try {
+                rc.completeTowerPattern(UnitType.LEVEL_ONE_MONEY_TOWER, target);
+                remarkAsDefense(target);
+            } catch (GameActionException e) {
+                try {
+                    rc.completeTowerPattern(UnitType.LEVEL_ONE_PAINT_TOWER, target);
+                    remarkAsDefense(target);
+                } catch (GameActionException f) {
+                    try {
+                        rc.completeTowerPattern(UnitType.LEVEL_ONE_DEFENSE_TOWER, target);
+                    } catch (GameActionException g) { ; }
                 }
             }
         }
@@ -215,6 +242,23 @@ public class Mopper extends Unit {
             }
         }
 
+        if (closest != null) return closest;
+
+        // do a more thorough search
+        if (closestRuin != null) {
+            for (MapInfo m : nearLocations) {
+                if (m.getPaint().isEnemy()) {
+                    int dx = m.getMapLocation().x - closestRuin.x;
+                    int dy = m.getMapLocation().y - closestRuin.y;
+                    if (Math.abs(dx) <= 2 && Math.abs(dy) <= 2 &&
+                            m.getMapLocation().distanceSquaredTo(rc.getLocation()) < dist) {
+                        dist = m.getMapLocation().distanceSquaredTo(rc.getLocation());
+                        closest = m.getMapLocation();
+                    }
+                }
+            }
+        }
+
         return closest;
     }
 
@@ -244,7 +288,8 @@ public class Mopper extends Unit {
                             nearRobots[i].getType() != UnitType.SPLASHER) {
                         if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 9)
                             numEnemyTowers++;
-                        else if (nearRobots[i].getType() == UnitType.LEVEL_ONE_DEFENSE_TOWER && // FIX!! ONLY LEVEL 1 FOR NOW
+
+                        if (nearRobots[i].getType().getBaseType() == UnitType.LEVEL_ONE_DEFENSE_TOWER &&
                                 nearRobots[i].getLocation().distanceSquaredTo(dest) <= 20) {
                             numEnemyTowers += 2;
                         }
@@ -338,6 +383,18 @@ public class Mopper extends Unit {
         }
 
         return ret;
+    }
+
+    boolean nothingLeftToRemoveRuin(MapLocation loc) throws GameActionException {
+        for (int i=-2; i<=2; i++) {
+            for (int j=-2; j<=2; j++) {
+                if (rc.canSenseLocation(loc.translate(i, j)) && rc.senseMapInfo(loc.translate(i, j)).getPaint().isEnemy()) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     @Override

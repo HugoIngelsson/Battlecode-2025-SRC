@@ -202,7 +202,8 @@ public class Splasher extends Unit {
                             nearRobots[i].getType() != UnitType.SPLASHER) {
                         if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 9)
                             numEnemyTowers++;
-                        if (nearRobots[i].getType() == UnitType.LEVEL_ONE_DEFENSE_TOWER &&
+
+                        if (nearRobots[i].getType().getBaseType() == UnitType.LEVEL_ONE_DEFENSE_TOWER &&
                                 nearRobots[i].getLocation().distanceSquaredTo(dest) <= 20) {
                             numEnemyTowers += 2;
                         }

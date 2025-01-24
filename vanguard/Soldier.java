@@ -230,7 +230,6 @@ public class Soldier extends Unit {
                     break;
                 case GameConstants.DEFENSE_TOWER_PATTERN:
                     rc.completeTowerPattern(UnitType.LEVEL_ONE_DEFENSE_TOWER, target);
-                    remarkAsDefense(target);
                     break;
                 case GameConstants.MONEY_TOWER_PATTERN:
                     rc.completeTowerPattern(UnitType.LEVEL_ONE_MONEY_TOWER, target);
@@ -329,6 +328,7 @@ public class Soldier extends Unit {
 
         for (Direction d : RobotPlayer.directions) {
             int numEnemyTowers = 0;
+            int numEnemyDefenseTowers = 0;
             int numEnemyMoppers = 0;
             int numAllies = 0;
             int numSuperCloseAllies = 0;
@@ -349,11 +349,13 @@ public class Soldier extends Unit {
                             numEnemyMoppers++;
                     } else if (nearRobots[i].getType() != UnitType.SOLDIER &&
                             nearRobots[i].getType() != UnitType.SPLASHER) {
-                        if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 9)
+                        if (nearRobots[i].getLocation().distanceSquaredTo(dest) <= 9) {
                             numEnemyTowers++;
-                        else if (nearRobots[i].getType().getBaseType() == UnitType.LEVEL_ONE_DEFENSE_TOWER &&
+                        }
+
+                        if (nearRobots[i].getType().getBaseType() == UnitType.LEVEL_ONE_DEFENSE_TOWER &&
                                 nearRobots[i].getLocation().distanceSquaredTo(dest) <= 16) {
-                            numEnemyTowers += 2;
+                            numEnemyDefenseTowers += 2;
                         }
                     }
                 }
@@ -383,6 +385,11 @@ public class Soldier extends Unit {
                     val -= numEnemyTowers * 100;
                 else if (rc.getHealth() > 20)
                     val += numEnemyTowers * 50;
+
+                if (!rc.isActionReady() || numAllies < 3)
+                    val -= numEnemyDefenseTowers * 200;
+                else if (rc.getHealth() > 50)
+                    val += numEnemyDefenseTowers * 50 * numAllies;
 
                 val -= numSuperCloseAllies * 30;
 
