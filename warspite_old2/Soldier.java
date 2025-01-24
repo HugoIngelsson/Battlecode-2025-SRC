@@ -138,8 +138,7 @@ public class Soldier extends Unit {
             }
         }
 
-        if (SRPSearch-- < 0 && blockNewTarget &&
-                rc.getLocation().distanceSquaredTo(target) < 15) {
+        if (SRPSearch-- < 0 && blockNewTarget && rc.getLocation().distanceSquaredTo(target) < 15) {
             blockNewTarget = false;
         }
 

@@ -67,8 +67,7 @@ public class Splasher extends Unit {
             target = null;
         }
 
-        if (blockNewTarget && (target == null ||
-                rc.getLocation().distanceSquaredTo(target) < 15)) {
+        if (blockNewTarget && (target == null || rc.getLocation().distanceSquaredTo(target) < 15)) {
             blockNewTarget = false;
         }
 
@@ -157,10 +156,8 @@ public class Splasher extends Unit {
             val += Long.bitCount(fullMask & neutralMask) * 3;
             val += Long.bitCount(fullMask & allyMask) * -1;
             val += Long.bitCount(partialMask & enemyMask) * 10;
-            if (lastEnemyTower != null && lastEnemyTower.equals(target))
-                val += 20;
 
-            if (val > bestVal && val >= 50) {
+            if (val > bestVal && val > 60) {
                 bestVal = val;
                 ret = m.getMapLocation();
             }

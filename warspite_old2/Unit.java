@@ -453,27 +453,4 @@ public abstract class Unit extends Robot {
             else blockNewTarget = true;
         }
     }
-
-    MapLocation randomTarget() throws GameActionException {
-        Direction dir = rc.getLocation().directionTo(new MapLocation(rc.getMapWidth()/2, rc.getMapHeight()/2));
-        if (dir == Direction.CENTER) dir = Direction.NORTH;
-        double rng = Math.random();
-        if (rng < 0.2) {
-            dir = dir.rotateRight().rotateRight();
-        } else if (rng < 0.4) {
-            dir = dir.rotateRight();
-        } else if (rng < 0.6) {
-            dir = dir.rotateLeft();
-        } else if (rng < 0.8) {
-            dir = dir.rotateLeft().rotateLeft();
-        }
-
-        return rc.getLocation().translate(dir.dx * 40, dir.dy * 40);
-    }
-
-    boolean closeToBorder() throws GameActionException {
-        int x = rc.getLocation().x;
-        int y = rc.getLocation().y;
-        return (x <= 2 || y <= 2 || x >= rc.getMapWidth()-3 || y >= rc.getMapHeight()-3);
-    }
 }
