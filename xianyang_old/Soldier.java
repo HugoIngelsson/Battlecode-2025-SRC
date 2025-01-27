@@ -218,16 +218,14 @@ public class Soldier extends Unit {
             switch (ruinPattern) {
                 case GameConstants.PAINT_TOWER_PATTERN:
                     rc.completeTowerPattern(UnitType.LEVEL_ONE_PAINT_TOWER, target);
-                    if (recentEnemies > 0)
-                        remarkAsDefense(target);
+                    remarkAsDefense(target);
                     break;
                 case GameConstants.DEFENSE_TOWER_PATTERN:
                     rc.completeTowerPattern(UnitType.LEVEL_ONE_DEFENSE_TOWER, target);
                     break;
                 case GameConstants.MONEY_TOWER_PATTERN:
                     rc.completeTowerPattern(UnitType.LEVEL_ONE_MONEY_TOWER, target);
-                    if (recentEnemies > 0)
-                        remarkAsDefense(target);
+                    remarkAsDefense(target);
                     break;
             }
         } catch (GameActionException e) {
@@ -521,7 +519,7 @@ public class Soldier extends Unit {
     void endTurn() throws GameActionException {
         super.endTurn();
         recentEnemies -= lastEnemiesSeen[0];
-        for (int i=0; i<4; i++) {
+        for (int i=0; i<3; i++) {
             lastEnemiesSeen[i] = lastEnemiesSeen[i+1];
         }
     }

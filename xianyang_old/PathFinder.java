@@ -1,7 +1,7 @@
 package xianyang;
 
-import battlecode.common.*;
 import xianyang.fast.FastMath;
+import battlecode.common.*;
 
 public class PathFinder  {
     static RobotController rc;

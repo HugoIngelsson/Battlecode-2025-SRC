@@ -16,9 +16,6 @@ public abstract class Tower extends Robot {
     int turnSpawned;
     MapLocation target;
 
-    int recentEnemies = 0;
-    int[] lastEnemiesSeen = new int[10];
-
     public Tower(RobotController rc) throws GameActionException {
         super(rc);
 
@@ -74,8 +71,6 @@ public abstract class Tower extends Robot {
 
     @Override
     void initTurn() throws GameActionException {
-        lastEnemiesSeen[9] = rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length;
-        recentEnemies += lastEnemiesSeen[9];
         decodeMessages();
         determineBestDestinations();
 
@@ -95,11 +90,6 @@ public abstract class Tower extends Robot {
         if (rc.getRoundNum() > Math.max(turnSpawned + 10, rc.getMapWidth() + rc.getMapHeight())) // send the HORSE
             endOfTurnMessageUnits();
         endOfTurnRelay();
-
-        recentEnemies -= lastEnemiesSeen[0];
-        for (int i=0; i<9; i++) {
-            lastEnemiesSeen[i] = lastEnemiesSeen[i+1];
-        }
     }
 
 
@@ -365,21 +355,15 @@ public abstract class Tower extends Robot {
             return 1;
         }
 
-        double splasherSkew = 0.1;
-        if (rc.getRoundNum() > (rc.getMapHeight() + rc.getMapWidth()) / 4)
+        double splasherSkew = 0.2;
+        if (rc.getRoundNum() > (rc.getMapHeight() + rc.getMapWidth()) / 2)
             splasherSkew += 0.2;
-        if (bestSplasherLoc != null && bestSplasherScore > 0)
-            splasherSkew += 0.2;
-
-        double soldierSkew = 0.5;
-        if (rc.getRoundNum() < (rc.getMapHeight() + rc.getMapWidth()) / 2)
-            soldierSkew += 0.25;
 
         if ((rc.getPaint() >= 300 || rc.getType().getBaseType() == UnitType.LEVEL_ONE_PAINT_TOWER)
                 && Math.random() < splasherSkew) {
             return 3;
         } else if ((rc.getPaint() >= 200 || rc.getType().getBaseType() == UnitType.LEVEL_ONE_PAINT_TOWER) &&
-                Math.random() < soldierSkew) {
+                Math.random() < 0.6) {
             return 1;
         } else {
             return 0;
@@ -502,14 +486,5 @@ public abstract class Tower extends Robot {
         }
 
         return null;
-    }
-
-    boolean isRebuildableAlly() throws GameActionException {
-        for (RobotInfo ri : rc.senseNearbyRobots(-1, rc.getTeam())) {
-            if (ri.getType() == UnitType.SOLDIER && ri.getPaintAmount() > 100)
-                return true;
-        }
-
-        return false;
     }
 }

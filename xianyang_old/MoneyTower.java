@@ -23,13 +23,12 @@ public class MoneyTower extends Tower {
             rc.attack(target);
         }
 
-        if (rc.getType() == UnitType.LEVEL_ONE_MONEY_TOWER && rc.getMoney() >= 9000 + rc.getHealth() &&
-                recentEnemies == 0 && Math.random() < 0.2 && isRebuildableAlly()) {
-            rc.disintegrate();
+        if (rc.getType() == UnitType.LEVEL_ONE_MONEY_TOWER && rc.getMoney() >= 9000 + rc.getHealth()) {
+            rc.upgradeTower(rc.getLocation());
         }
-//        else if (rc.getType() == UnitType.LEVEL_TWO_MONEY_TOWER && rc.getMoney() >= 11500 + rc.getHealth()) {
-//            rc.upgradeTower(rc.getLocation());
-//        }
+        else if (rc.getType() == UnitType.LEVEL_TWO_MONEY_TOWER && rc.getMoney() >= 11500 + rc.getHealth()) {
+            rc.upgradeTower(rc.getLocation());
+        }
         if (nextSpawn == 0 && rc.getPaint() >= 100 &&
                 (rc.getMoney() >= 1030 && rc.getRoundNum() > 30 || rc.getRoundNum() <= 3 && rc.getMoney() >= 300)) {
             MapLocation spawnLoc = nextSpawnLocation(UnitType.MOPPER);
