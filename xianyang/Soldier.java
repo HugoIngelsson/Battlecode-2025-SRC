@@ -206,6 +206,9 @@ public class Soldier extends Unit {
                 }
 
                 rc.attack(paintLoc, secondary);
+            } else if (target != null && target.equals(closestRuin)) {
+                lastOccupiedRuin = closestRuin;
+                lastOccupiedRuinTurn = rc.getRoundNum();
             }
         }
 
@@ -412,18 +415,8 @@ public class Soldier extends Unit {
             RobotInfo ri = rc.senseRobotAtLocation(m);
             if (ri == null && minDist > m.distanceSquaredTo(rc.getLocation()) &&
                     (m != lastOccupiedRuin || lastOccupiedRuinTurn + 10 > rc.getRoundNum())) {
-                if (rc.getLocation().distanceSquaredTo(m) > 2 && rc.getRoundNum() > 30 && (
-                        rc.canSenseRobotAtLocation(m.add(Direction.NORTH)) && rc.senseRobotAtLocation(m.add(Direction.NORTH)).getTeam() == rc.getTeam() ||
-                        rc.canSenseRobotAtLocation(m.add(Direction.SOUTH)) && rc.senseRobotAtLocation(m.add(Direction.SOUTH)).getTeam() == rc.getTeam() ||
-                        rc.canSenseRobotAtLocation(m.add(Direction.WEST)) && rc.senseRobotAtLocation(m.add(Direction.WEST)).getTeam() == rc.getTeam() ||
-                        rc.canSenseRobotAtLocation(m.add(Direction.EAST)) && rc.senseRobotAtLocation(m.add(Direction.EAST)).getTeam() == rc.getTeam())
-                ) {
-                    lastOccupiedRuinTurn = rc.getRoundNum();
-                    lastOccupiedRuin = m;
-                } else {
-                    minDist = m.distanceSquaredTo(rc.getLocation());
-                    ret = m;
-                }
+                minDist = m.distanceSquaredTo(rc.getLocation());
+                ret = m;
             }
             else if (ri != null) {
                 if (rc.canSendMessage(ri.getLocation())) {
