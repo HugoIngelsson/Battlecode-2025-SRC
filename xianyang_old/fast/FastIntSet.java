@@ -1,4 +1,4 @@
-package xianyang.fast;
+package xianyang_old.fast;
 
 public class FastIntSet {
     public StringBuilder keys;

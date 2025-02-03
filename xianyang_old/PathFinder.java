@@ -1,6 +1,6 @@
-package xianyang;
+package xianyang_old;
 
-import xianyang.fast.FastMath;
+import xianyang_old.fast.FastMath;
 import battlecode.common.*;
 
 public class PathFinder  {

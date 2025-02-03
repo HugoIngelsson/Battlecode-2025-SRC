@@ -1,4 +1,4 @@
-package warspite.fast;
+package warspite_old.fast;
 
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;

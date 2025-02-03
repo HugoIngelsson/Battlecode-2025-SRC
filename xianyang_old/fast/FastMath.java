@@ -1,4 +1,4 @@
-package xianyang.fast;
+package xianyang_old.fast;
 
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;

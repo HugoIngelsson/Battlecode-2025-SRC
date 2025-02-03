@@ -1,4 +1,4 @@
-package xianyang;
+package xianyang_old;
 
 import battlecode.common.Direction;
 

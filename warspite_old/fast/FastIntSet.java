@@ -1,4 +1,4 @@
-package warspite.fast;
+package warspite_old.fast;
 
 public class FastIntSet {
     public StringBuilder keys;

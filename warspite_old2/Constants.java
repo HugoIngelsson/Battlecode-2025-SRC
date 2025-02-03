@@ -1,4 +1,4 @@
-package warspite;
+package warspite_old2;
 
 import battlecode.common.Direction;
 

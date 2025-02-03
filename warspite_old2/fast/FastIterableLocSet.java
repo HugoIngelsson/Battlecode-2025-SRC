@@ -1,4 +1,4 @@
-package warspite.fast;
+package warspite_old2.fast;
 
 import battlecode.common.MapLocation;
 

@@ -1,4 +1,4 @@
-package warspite;
+package warspite_old;
 
 import battlecode.common.Clock;
 import battlecode.common.Direction;

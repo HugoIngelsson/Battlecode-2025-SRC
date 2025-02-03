@@ -1,7 +1,7 @@
-package warspite;
+package warspite_old2;
 
 import battlecode.common.*;
-import warspite.fast.FastMath;
+import warspite_old2.fast.FastMath;
 
 public class PathFinder  {
     static RobotController rc;

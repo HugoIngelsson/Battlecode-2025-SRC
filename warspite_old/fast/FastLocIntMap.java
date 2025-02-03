@@ -1,5 +1,5 @@
 // https://github.com/BSreenivas0713/Battlecode2022/blob/main/src/MPBasic/fast/FastLocIntMap.java
-package warspite.fast;
+package warspite_old.fast;
 
 import battlecode.common.MapLocation;
 

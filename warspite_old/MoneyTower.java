@@ -1,4 +1,4 @@
-package warspite;
+package warspite_old;
 
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
