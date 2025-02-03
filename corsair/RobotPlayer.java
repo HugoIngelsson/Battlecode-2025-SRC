@@ -26,7 +26,7 @@ public class RobotPlayer {
     static Robot r;
     @SuppressWarnings("unused")
     public static void run(RobotController rc) throws GameActionException {
-        switch (rc.getType()) {
+        switch (rc.getType().getBaseType()) {
             case SOLDIER: r = new Soldier(rc); break;
             case SPLASHER: r = new Splasher(rc); break;
             case MOPPER: r = new Mopper(rc); break;

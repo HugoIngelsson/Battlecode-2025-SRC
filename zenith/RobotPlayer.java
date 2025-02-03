@@ -1,6 +1,9 @@
-package avenger;
+package zenith;
 
-import battlecode.common.*;
+import battlecode.common.Clock;
+import battlecode.common.Direction;
+import battlecode.common.GameActionException;
+import battlecode.common.RobotController;
 
 import java.util.Random;
 
@@ -23,6 +26,7 @@ public class RobotPlayer {
     static Robot r;
     @SuppressWarnings("unused")
     public static void run(RobotController rc) throws GameActionException {
+        PathFinder.init(rc);
         switch (rc.getType().getBaseType()) {
             case SOLDIER: r = new Soldier(rc); break;
             case SPLASHER: r = new Splasher(rc); break;
@@ -36,6 +40,7 @@ public class RobotPlayer {
         }
 
         r.turn1();
+        turnCount = rc.getRoundNum()-1;
 
         while (true) {
             try {
@@ -51,6 +56,10 @@ public class RobotPlayer {
                 System.out.println("Exception");
                 e.printStackTrace();
             } finally {
+                if (rc.getRoundNum() != turnCount) {
+                    turnCount = rc.getRoundNum();
+                    System.out.println("Overflowed on bytecode " + rc.getType());
+                }
                 Clock.yield();
             }
         }
